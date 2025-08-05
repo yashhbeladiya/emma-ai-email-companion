@@ -1,0 +1,197 @@
+// sidebar.js - Sidebar UI component
+window.AIEmailCompanion = window.AIEmailCompanion || {};
+
+window.AIEmailCompanion.Sidebar = class {
+  constructor() {
+    this.sidebar = null;
+    this.state = window.AIEmailCompanion.Constants.SIDEBAR_STATES.CLOSED;
+    this.closeCallback = null;
+    this.helpers = window.AIEmailCompanion.Helpers;
+    this.components = window.AIEmailCompanion.Components;
+  }
+
+  create() {
+    // Remove existing sidebar if present
+    this.remove();
+
+    this.sidebar = document.createElement('div');
+    this.sidebar.className = 'ai-companion-sidebar ai-email-companion';
+    
+    // Create header
+    const header = this.createHeader();
+    
+    // Create content area
+    const content = document.createElement('div');
+    content.className = 'sidebar-content';
+    
+    const loadingState = this.components.createLoadingState();
+    content.appendChild(loadingState);
+    
+    this.sidebar.appendChild(header);
+    this.sidebar.appendChild(content);
+    
+    // Setup event listeners
+    this.setupEventListeners();
+    
+    document.body.appendChild(this.sidebar);
+    console.log('Sidebar created');
+  }
+
+  createHeader() {
+    const header = document.createElement('div');
+    header.className = 'sidebar-header';
+    
+    const title = document.createElement('h3');
+    title.className = 'sidebar-title';
+    title.innerHTML = 'Emma: Email Assistant <span class="sparkle">✨</span>';
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'sidebar-close';
+    closeBtn.setAttribute('title', 'Close');
+    
+    // Create close icon
+    const closeSvg = this.helpers.createSVG('0 0 24 24',
+      'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z',
+      {
+        width: '20px',
+        height: '20px',
+        fill: '#6b7280',
+        transition: 'all 0.3s ease'
+      }
+    );
+    
+    closeBtn.appendChild(closeSvg);
+    
+    // Close button hover effects
+    closeBtn.addEventListener('mouseenter', () => {
+      closeBtn.style.background = 'rgba(239, 68, 68, 0.1)';
+      closeBtn.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+      closeBtn.style.transform = 'scale(1.1) rotate(90deg)';
+      closeSvg.style.fill = '#ef4444';
+    });
+    
+    closeBtn.addEventListener('mouseleave', () => {
+      closeBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+      closeBtn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+      closeBtn.style.transform = 'scale(1) rotate(0deg)';
+      closeSvg.style.fill = '#6b7280';
+    });
+    
+    // Close button click
+    closeBtn.addEventListener('click', () => this.close());
+    
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+    
+    return header;
+  }
+
+  setupEventListeners() {
+    // Handle escape key
+    this.escapeHandler = (e) => {
+      if (e.key === 'Escape' && this.isOpen()) {
+        this.close();
+      }
+    };
+    document.addEventListener('keydown', this.escapeHandler);
+
+    // Handle clicks outside
+    this.clickOutsideHandler = (e) => {
+      if (this.isOpen() && 
+          !this.sidebar.contains(e.target) && 
+          !e.target.closest('.ai-companion-icon') &&
+          !e.target.closest('[contenteditable="true"]')) {
+        this.close();
+      }
+    };
+    document.addEventListener('click', this.clickOutsideHandler);
+  }
+
+  open() {
+    if (this.state === window.AIEmailCompanion.Constants.SIDEBAR_STATES.OPENING || 
+        this.state === window.AIEmailCompanion.Constants.SIDEBAR_STATES.OPEN) {
+      return;
+    }
+    
+    this.state = window.AIEmailCompanion.Constants.SIDEBAR_STATES.OPENING;
+    this.sidebar.classList.add('open');
+    
+    setTimeout(() => {
+      this.state = window.AIEmailCompanion.Constants.SIDEBAR_STATES.OPEN;
+    }, window.AIEmailCompanion.Constants.TIMINGS.SIDEBAR_ANIMATION);
+    
+    console.log('Sidebar opened');
+  }
+
+  close() {
+    if (this.state === window.AIEmailCompanion.Constants.SIDEBAR_STATES.CLOSING || 
+        this.state === window.AIEmailCompanion.Constants.SIDEBAR_STATES.CLOSED) {
+      return;
+    }
+    
+    this.state = window.AIEmailCompanion.Constants.SIDEBAR_STATES.CLOSING;
+    this.sidebar.classList.remove('open');
+    
+    setTimeout(() => {
+      this.state = window.AIEmailCompanion.Constants.SIDEBAR_STATES.CLOSED;
+      if (this.closeCallback) {
+        this.closeCallback();
+      }
+    }, 500);
+    
+    console.log('Sidebar closed');
+  }
+
+  toggle() {
+    if (this.isOpen()) {
+      this.close();
+    } else {
+      this.open();
+    }
+  }
+
+  isOpen() {
+    return this.state === window.AIEmailCompanion.Constants.SIDEBAR_STATES.OPEN;
+  }
+
+  getContentElement() {
+    return this.sidebar.querySelector('.sidebar-content');
+  }
+
+  updateContent(content) {
+    const contentElement = this.getContentElement();
+    if (contentElement) {
+      if (typeof content === 'string') {
+        contentElement.innerHTML = content;
+      } else {
+        contentElement.innerHTML = '';
+        contentElement.appendChild(content);
+      }
+    }
+  }
+
+  showLoading(text) {
+    const loadingState = this.components.createLoadingState(text);
+    this.updateContent(loadingState);
+  }
+
+  showError(retryCallback) {
+    const errorState = this.components.createErrorState(retryCallback);
+    this.updateContent(errorState);
+  }
+
+  remove() {
+    const existingSidebar = document.querySelector('.ai-companion-sidebar');
+    if (existingSidebar) {
+      existingSidebar.remove();
+    }
+    
+    // Clean up event listeners
+    if (this.escapeHandler) {
+      document.removeEventListener('keydown', this.escapeHandler);
+    }
+    if (this.clickOutsideHandler) {
+      document.removeEventListener('click', this.clickOutsideHandler);
+    }
+  }
+};

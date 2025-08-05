@@ -1,0 +1,312 @@
+/* main.css - Main styles for AI Email Companion */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* CSS Variables */
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
+  --neutral-50: #f9fafb;
+  --neutral-100: #f3f4f6;
+  --neutral-200: #e5e7eb;
+  --neutral-300: #d1d5db;
+  --neutral-400: #9ca3af;
+  --neutral-500: #6b7280;
+  --neutral-600: #4b5563;
+  --neutral-700: #374151;
+  --neutral-800: #1f2937;
+  --neutral-900: #111827;
+  --sidebar-width: 400px;
+  --border-radius: 16px;
+  --animation-duration: 0.4s;
+  --animation-easing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base styles */
+.ai-email-companion {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  position: fixed;
+  z-index: 2147483647;
+  color: var(--neutral-800);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Floating Icon */
+.ai-companion-icon {
+  position: fixed;
+  top: 50%;
+  right: 24px;
+  transform: translateY(-50%);
+  width: 64px;
+  height: 64px;
+  background: var(--primary-gradient);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 2147483647;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  animation: pulse 3s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+  }
+  50% {
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.8);
+  }
+}
+
+.ai-companion-icon:hover {
+  transform: translateY(-50%) scale(1.15) rotate(5deg);
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.6);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.ai-companion-icon:active {
+  transform: translateY(-50%) scale(1.05);
+}
+
+/* Animations */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0% { opacity: 0.8; }
+  50% { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+
+@keyframes fadeInDown {
+  0% { 
+    opacity: 0; 
+    transform: translateY(-30px); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes fadeInUp {
+  0% { 
+    opacity: 0; 
+    transform: translateY(30px); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes sparkle {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1) rotate(0deg); 
+  }
+  50% { 
+    opacity: 0.7; 
+    transform: scale(1.2) rotate(180deg); 
+  }
+}
+
+@keyframes slideInBounce {
+  0% { 
+    right: -420px; 
+    opacity: 0; 
+    transform: scale(0.8); 
+  }
+  60% { 
+    right: 10px; 
+    transform: scale(1.05); 
+  }
+  100% { 
+    right: 20px; 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+}
+
+/* Loading States */
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 32px;
+  flex-direction: column;
+  gap: 24px;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(102, 126, 234, 0.1);
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite, pulse-spinner 2s ease-in-out infinite;
+  position: relative;
+}
+
+@keyframes pulse-spinner {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.inner-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  background: var(--primary-gradient);
+  border-radius: 50%;
+  opacity: 0.3;
+  animation: inner-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes inner-pulse {
+  0%, 100% { 
+    transform: translate(-50%, -50%) scale(0.8); 
+    opacity: 0.3; 
+  }
+  50% { 
+    transform: translate(-50%, -50%) scale(1.2); 
+    opacity: 0.6; 
+  }
+}
+
+.loading-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--neutral-500);
+  margin: 0;
+  background: var(--primary-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 2s infinite;
+}
+
+/* Error States */
+.error-state {
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.error-state p {
+  font-size: 14px;
+  color: var(--neutral-500);
+  margin: 0 0 16px 0;
+}
+
+/* Buttons */
+.btn {
+  transition: all 0.2s var(--animation-easing);
+  font-family: inherit;
+  outline: none;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 13px;
+}
+
+.btn:focus {
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.btn-primary {
+  background: var(--primary-gradient);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-secondary {
+  background: var(--neutral-100);
+  color: var(--neutral-700);
+  border: 1px solid var(--neutral-200);
+}
+
+.btn-secondary:hover {
+  background: var(--neutral-200);
+  border-color: var(--neutral-300);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.btn-success:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Notifications */
+.ai-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: white;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  z-index: 2147483648;
+  transform: translateX(400px);
+  transition: transform 0.3s var(--animation-easing);
+}
+
+.ai-notification.show {
+  transform: translateX(0);
+}
+
+.ai-notification-success {
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.ai-notification-error {
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--neutral-700);
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .ai-companion-icon {
+    right: 16px;
+    width: 56px;
+    height: 56px;
+  }
+  
+  .ai-companion-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+}
