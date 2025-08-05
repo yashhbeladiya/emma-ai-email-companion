@@ -1,0 +1,71 @@
+{
+  "manifest_version": 3,
+  "name": "Emma - AI Email Companion",
+  "version": "2.0.0",
+  "description": "Intelligent email assistant with backend AI integration, smart replies, tone analysis, and local calendar management",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "contextMenus",
+    "notifications",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://mail.google.com/*",
+    "https://outlook.live.com/*",
+    "https://outlook.office.com/*",
+    "https://outlook.office365.com/*",
+    "https://your-backend-api.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://mail.google.com/*",
+        "https://outlook.live.com/*",
+        "https://outlook.office.com/*",
+        "https://outlook.office365.com/*"
+      ],
+      "js": [
+        "content/modules/utils/constants.js",
+        "content/modules/utils/helpers.js",
+        "content/modules/calendar/local-calendar.js",
+        "content/modules/api/backend-api.js",
+        "content/modules/ui/components.js",
+        "content/modules/ui/floating-icon.js",
+        "content/modules/ui/sidebar.js",
+        "content/modules/email/email-extractor.js",
+        "content/modules/email/email-analyzer.js",
+        "content/modules/email/email-observer.js",
+        "content/modules/compose/compose-assistant.js",
+        "content/modules/compose/compose-observer.js",
+        "content/content.js"
+      ],
+      "css": [
+        "content/styles/main.css",
+        "content/styles/sidebar.css",
+        "content/styles/components.css"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "AI Email Companion"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["compose-helper.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
