@@ -1,4 +1,4 @@
-// compose-observer.js - Compose window detection module
+// compose-observer.js - Compose window detection module with complete context handling
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 
 window.AIEmailCompanion.ComposeObserver = class {
@@ -41,6 +41,9 @@ window.AIEmailCompanion.ComposeObserver = class {
               this.setupComposeWindow(textarea);
             }
           });
+          
+          // Check if compose window opened/closed to adjust sidebar
+          this.checkComposeState();
         }
       });
     });
@@ -51,6 +54,14 @@ window.AIEmailCompanion.ComposeObserver = class {
     });
     
     console.log('Compose observer set up');
+  }
+
+  checkComposeState() {
+    const sidebar = window.AIEmailCompanion.main?.sidebar;
+    if (sidebar && sidebar.isOpen()) {
+      // Recheck compose box position
+      sidebar.adjustForComposeBox();
+    }
   }
 
   checkExistingComposeWindows() {
@@ -72,9 +83,34 @@ window.AIEmailCompanion.ComposeObserver = class {
   }
 
   extractComposeContext() {
-    // Check if we have current email data (replying to an email)
-    if (window.AIEmailCompanion.main?.currentEmailData) {
-      return this.extractor.extractReplyContext(window.AIEmailCompanion.main.currentEmailData);
+    // Check if this is a reply or forward
+    const site = window.AIEmailCompanion.Helpers.getCurrentSite();
+    let isReply = false;
+    
+    if (site.isGmail) {
+      // Check for reply indicators in Gmail
+      const replyIndicators = document.querySelector('.ajl') || // Reply button clicked
+                             document.querySelector('.gJ') || // Reply context
+                             document.querySelector('.gmail_quote') || // Quoted text
+                             document.querySelector('[aria-label*="Reply"]'); // Reply compose
+      isReply = !!replyIndicators;
+    } else if (site.isOutlook) {
+      // Check for reply indicators in Outlook
+      const replyIndicators = document.querySelector('.quoted-text') ||
+                             document.querySelector('[id*="divRplyFwdMsg"]') ||
+                             document.querySelector('[aria-label*="Reply"]');
+      isReply = !!replyIndicators;
+    }
+    
+    // Only return reply context if we're actually replying AND have email data
+    if (isReply && window.AIEmailCompanion.main?.currentEmailData) {
+      const emailData = window.AIEmailCompanion.main.currentEmailData;
+      return {
+        originalSubject: emailData.subject || 'Previous Email',
+        originalSender: emailData.sender || 'Sender',
+        originalBody: (emailData.body || '').substring(0, 500),
+        replyType: 'reply'
+      };
     }
     
     // Otherwise it's a new compose
@@ -84,8 +120,16 @@ window.AIEmailCompanion.ComposeObserver = class {
   updateContext(emailData) {
     // Update context when email changes
     if (emailData) {
-      const context = this.extractor.extractReplyContext(emailData);
+      const context = {
+        originalSubject: emailData.subject || 'Previous Email',
+        originalSender: emailData.sender || 'Sender',
+        originalBody: (emailData.body || '').substring(0, 500),
+        replyType: 'reply'
+      };
       this.assistant.updateContext(context);
+    } else {
+      // No email data, reset to compose mode
+      this.assistant.updateContext({ replyType: 'compose' });
     }
   }
 };
