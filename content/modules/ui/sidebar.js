@@ -37,6 +37,28 @@ window.AIEmailCompanion.Sidebar = class {
     console.log('Sidebar created');
   }
 
+  adjustForComposeBox() {
+    // This method is no longer needed as we handle compose differently
+    // Keeping for backward compatibility
+  }
+
+  moveToLeft() {
+    this.sidebar.classList.add('left-positioned');
+    this.sidebar.classList.remove('compose-adjusted');
+  }
+
+  resetPosition() {
+    this.sidebar.classList.remove('left-positioned');
+    this.sidebar.classList.remove('compose-adjusted');
+    this.sidebar.classList.remove('compose-mode');
+    this.sidebar.style.bottom = '';
+    this.sidebar.style.height = '';
+  }
+
+  isInComposeMode() {
+    return this.sidebar.classList.contains('compose-mode');
+  }
+
   createHeader() {
     const header = document.createElement('div');
     header.className = 'sidebar-header';
@@ -107,20 +129,36 @@ window.AIEmailCompanion.Sidebar = class {
     document.addEventListener('click', this.clickOutsideHandler);
   }
 
-  open() {
+  open(forCompose = false) {
     if (this.state === window.AIEmailCompanion.Constants.SIDEBAR_STATES.OPENING || 
         this.state === window.AIEmailCompanion.Constants.SIDEBAR_STATES.OPEN) {
       return;
     }
     
     this.state = window.AIEmailCompanion.Constants.SIDEBAR_STATES.OPENING;
+    
+    // Hide floating icon when sidebar opens
+    if (window.AIEmailCompanion.main?.floatingIcon) {
+      window.AIEmailCompanion.main.floatingIcon.hide();
+    }
+    
+    // If opening for compose, always position on left
+    if (forCompose) {
+      this.sidebar.classList.add('compose-mode');
+      this.moveToLeft();
+    } else {
+      // Normal right-side positioning for email analysis
+      this.sidebar.classList.remove('compose-mode');
+      this.resetPosition();
+    }
+    
     this.sidebar.classList.add('open');
     
     setTimeout(() => {
       this.state = window.AIEmailCompanion.Constants.SIDEBAR_STATES.OPEN;
     }, window.AIEmailCompanion.Constants.TIMINGS.SIDEBAR_ANIMATION);
     
-    console.log('Sidebar opened');
+    console.log(`Sidebar opened ${forCompose ? 'for compose' : 'for analysis'}`);
   }
 
   close() {
@@ -134,6 +172,12 @@ window.AIEmailCompanion.Sidebar = class {
     
     setTimeout(() => {
       this.state = window.AIEmailCompanion.Constants.SIDEBAR_STATES.CLOSED;
+      
+      // Show floating icon when sidebar closes
+      if (window.AIEmailCompanion.main?.floatingIcon) {
+        window.AIEmailCompanion.main.floatingIcon.show();
+      }
+      
       if (this.closeCallback) {
         this.closeCallback();
       }
