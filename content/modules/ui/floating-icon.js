@@ -64,13 +64,21 @@ window.AIEmailCompanion.FloatingIcon = class {
 
   hide() {
     if (this.icon) {
-      this.icon.style.display = 'none';
+      this.icon.style.opacity = '0';
+      this.icon.style.transform = 'translateY(-50%) scale(0.8)';
+      setTimeout(() => {
+        this.icon.style.display = 'none';
+      }, 300);
     }
   }
 
   show() {
     if (this.icon) {
       this.icon.style.display = 'flex';
+      setTimeout(() => {
+        this.icon.style.opacity = '1';
+        this.icon.style.transform = 'translateY(-50%) scale(1)';
+      }, 50);
     }
   }
 };
