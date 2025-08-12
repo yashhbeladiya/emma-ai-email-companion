@@ -15,7 +15,7 @@ chrome.runtime.onInstalled.addListener((details) => {
       smartReplies: true,
       toneAssistance: true,
       notifications: true,
-      backendUrl: 'https://d2d3-155-33-135-52.ngrok-free.app' // Default backend URL
+      backendUrl: 'https://2f799a89e33e.ngrok-free.app' // Default backend URL
     }, () => {
       console.log('Default settings saved');
     });
