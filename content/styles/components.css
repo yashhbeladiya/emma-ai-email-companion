@@ -405,6 +405,8 @@
   transition: all 0.2s ease;
   background: #fafbfc;
   color: #1a1a1a;
+  box-sizing: border-box;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .compose-prompt-input:focus {
@@ -661,6 +663,7 @@
 
 .action-checkbox {
   position: relative;
+  display: flex;
 }
 
 .action-checkbox input[type="checkbox"] {
@@ -840,6 +843,7 @@
   .compose-prompt-input {
     font-size: 12px;
     padding: 10px 12px;
+    box-sizing: border-box;
   }
   
   .generate-email-btn {
