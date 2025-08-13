@@ -66,7 +66,8 @@ window.AIEmailCompanion.Components = {
   },
 
   createSummarySection(summaryData) {
-    const points = summaryData?.data?.points || ['No summary available'];
+    const summary = summaryData?.data?.summary
+    const points = [summary] || ['No summary available'];
     console.log('Summary points:', points);
 
     return `
