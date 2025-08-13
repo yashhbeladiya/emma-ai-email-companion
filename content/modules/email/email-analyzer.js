@@ -72,6 +72,11 @@ window.AIEmailCompanion.EmailAnalyzer = class {
     };
   }
 
+  capitalizeWord(word) {
+    if (!word) return '';
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  }
+
   generateSummaryPoints(emailData) {
     if (!emailData || !emailData.body) return ['Email content not available'];
     
@@ -120,8 +125,8 @@ window.AIEmailCompanion.EmailAnalyzer = class {
           <span class="metadata-item intent-badge ${this.getIntentClass(intentData?.data?.intent)}">
             ${window.AIEmailCompanion.Constants.INTENT_EMOJIS[intentData?.data?.intent] || '📧'} ${intentData?.data?.intent || 'Email'}
           </span>
-          <span class="metadata-item tone-badge ${this.getToneClass(toneData?.data?.tone)}">
-            ${toneData?.data?.tone || 'Normal'}
+          <span class="metadata-item tone-badge ${this.getToneClass(toneData?.data?.emotions.primary)}">
+            ${this.capitalizeWord(toneData?.data?.emotions.primary) || 'Normal'}
           </span>
         </div>
       </div>
@@ -150,7 +155,7 @@ window.AIEmailCompanion.EmailAnalyzer = class {
       html += this.components.createSummarySection(summaryData);
       
       // Add action items if present
-      if (actionItems?.data?.actions?.length > 0) {
+      if (actionItems?.data?.action_items?.length > 0) {
         html += this.createActionItemsSection(actionItems);
       }
       
@@ -179,6 +184,8 @@ window.AIEmailCompanion.EmailAnalyzer = class {
     if (!emailData || !emailData.subject) {
       return 'Email Analysis';
     }
+
+    console.log('Generating title for email:', emailData.subject);
     
     // Clean and truncate subject for title
     const subject = emailData.subject || 'Untitled Email';
@@ -286,7 +293,8 @@ window.AIEmailCompanion.EmailAnalyzer = class {
   }
 
   createActionItemsSection(actionItems) {
-    const actions = actionItems.data.actions;
+    const actions = actionItems.data.action_items || [];
+    console.log('Creating action items section with actions:', actions);
     
     return `
       <div class="action-items-section">
@@ -305,7 +313,7 @@ window.AIEmailCompanion.EmailAnalyzer = class {
                 <label for="action-${index}"></label>
               </div>
               <div class="action-content">
-                <span class="action-text">${action.text}</span>
+                <span class="action-text">${action.task}</span>
                 ${action.link ? `<a href="${action.link}" class="action-link" target="_blank">Open →</a>` : ''}
               </div>
             </div>
