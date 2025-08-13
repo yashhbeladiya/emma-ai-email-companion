@@ -29,18 +29,17 @@ window.AIEmailCompanion.EmailAnalyzer = class {
       }
       
       // Get all analysis from backend in parallel
-      const [intentData, toneData, summaryData, repliesData, attachmentSuggestions, meetingInfo, actionItems] = await Promise.all([
+      const [intentData, toneData, summaryData, repliesData, meetingInfo, actionItems] = await Promise.all([
         this.api.callAPI('/api/email/intent', emailData),
         this.api.callAPI('/api/email/tone', emailData),
         this.api.callAPI('/api/email/summary', emailData),
         this.api.callAPI('/api/reply/quick', emailData),
-        this.api.callAPI('/api/attachments/suggest', { emailData }),
         this.api.callAPI('/api/meeting/extract', emailData),
         this.api.callAPI('/api/action', emailData)
       ]);
 
       console.log('Email analysis results:', {
-        intentData, toneData, summaryData, repliesData, attachmentSuggestions, meetingInfo, actionItems
+        intentData, toneData, summaryData, repliesData, meetingInfo, actionItems
       });
 
       return {
@@ -48,7 +47,6 @@ window.AIEmailCompanion.EmailAnalyzer = class {
         toneData,
         summaryData,
         repliesData,
-        attachmentSuggestions,
         meetingInfo,
         actionItems,
         isNoReply: false
@@ -96,8 +94,7 @@ window.AIEmailCompanion.EmailAnalyzer = class {
       intentData, 
       toneData, 
       summaryData, 
-      repliesData, 
-      attachmentSuggestions, 
+      repliesData,
       meetingInfo, 
       actionItems,
       isNoReply 
@@ -169,8 +166,8 @@ window.AIEmailCompanion.EmailAnalyzer = class {
     }
     
     // Add attachment suggestions
-    if (attachmentSuggestions?.data?.suggestions?.length > 0) {
-      html += this.createAttachmentSection(attachmentSuggestions);
+    if (actionItems?.data?.attachments.length > 0) {
+      html += this.createAttachmentSection(actionItems);
     }
     
     html += '</div>';
@@ -323,7 +320,7 @@ window.AIEmailCompanion.EmailAnalyzer = class {
     `;
   }
 
-  createAttachmentSection(attachmentSuggestions) {
+  createAttachmentSection(actionItems) {
     return `
       <div class="attachments-section">
         <h5 class="section-title">
@@ -333,12 +330,12 @@ window.AIEmailCompanion.EmailAnalyzer = class {
           Suggested Attachments
         </h5>
         <div class="attachment-suggestions">
-          ${attachmentSuggestions.data.suggestions.map(suggestion => `
+          ${actionItems.data.attachments.map(attachment => `
             <div class="attachment-item">
               <div class="attachment-icon">📎</div>
               <div class="attachment-details">
-                <span class="attachment-name">${suggestion.description}</span>
-                <span class="attachment-reason">${suggestion.reason}</span>
+                <span class="attachment-name">${attachment.description}</span>
+                <span class="attachment-reason">${attachment.reason}</span>
               </div>
             </div>
           `).join('')}
