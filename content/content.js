@@ -156,7 +156,7 @@
         const analysisResults = await this.emailAnalyzer.analyzeEmail(emailData);
         
         // Build and show UI
-        const analysisUI = this.emailAnalyzer.buildAnalysisUI(analysisResults);
+        const analysisUI = this.emailAnalyzer.buildAnalysisUI(analysisResults, emailData);
         this.sidebar.updateContent(analysisUI);
         
         // Setup event listeners
