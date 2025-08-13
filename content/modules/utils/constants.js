@@ -3,7 +3,7 @@ window.AIEmailCompanion = window.AIEmailCompanion || {};
 
 window.AIEmailCompanion.Constants = {
   // API Configuration
-  API_BASE_URL: 'https://46ab-155-33-135-52.ngrok-free.app',
+  API_BASE_URL: 'https://396d6892d34f.ngrok-free.app',
   
   // Storage Keys
   STORAGE_KEYS: {
