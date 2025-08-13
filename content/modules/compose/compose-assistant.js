@@ -134,12 +134,14 @@ window.AIEmailCompanion.ComposeAssistant = class {
     }
     
     try {
-      console.log('Sending compose text to backend for suggestions...');
+      console.log('Sending compose text to backend for suggestions...', text);
       
       const response = await this.api.callAPI('/api/email/compose', {
         body: text,
         context: this.currentContext
       });
+
+      console.log('Received compose suggestions:', response);
 
       if (response.success && response.data) {
         this.showComposeSuggestions(response.data);
@@ -266,10 +268,14 @@ window.AIEmailCompanion.ComposeAssistant = class {
         `;
         
         try {
+          console.log('Generating email from prompt:', prompt);
+
           const response = await this.api.callAPI('/api/email/compose/prompt', {
-            prompt: prompt,
+            body: prompt,
             context: this.currentContext
           });
+
+          console.log('Generated email response:', response);
           
           if (response.success && response.data) {
             this.insertGeneratedEmail(response.data);
