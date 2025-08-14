@@ -1,3 +1,18 @@
+/**
+ * Emma - AI Email Companion Background Script
+ * 
+ * This service worker handles background tasks for the Emma AI Email Companion extension:
+ * - Extension lifecycle management (install, startup, updates)
+ * - Context menu creation and handling
+ * - Communication between content scripts and popup
+ * - Calendar event management
+ * - Storage operations for settings and data
+ * - Mock API responses for development
+ * 
+ * @version 2.0.0
+ * @author Emma AI Team
+ */
+
 // Emma - AI Email Companion Background Script - Enhanced Version
 console.log('Emma - AI Email Companion background script loading...');
 
