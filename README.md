@@ -276,7 +276,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For support, please:
 - Open an issue on GitHub
-- Email: support@emma-ai.com
+- Email: beladiya,y@northeastern.edu
 - Documentation: [Wiki](https://github.com/yashhbeladiya/emma-ai-email-companion/wiki)
 
 ## Acknowledgments
