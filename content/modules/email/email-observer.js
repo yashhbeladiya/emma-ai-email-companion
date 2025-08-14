@@ -1,3 +1,31 @@
+/**
+ * Email Observer Module
+ * 
+ * Monitors email pages for changes and triggers analysis when new emails are loaded.
+ * Uses multiple detection strategies including URL monitoring, DOM observation,
+ * and periodic checking to ensure reliable email detection.
+ * 
+ * Features:
+ * - Real-time email detection across platforms
+ * - URL-based navigation monitoring
+ * - DOM mutation observation
+ * - Interval-based fallback checking
+ * - Debounced change handling
+ * - Platform-specific email identification
+ * - Memory leak prevention
+ * - Performance optimization
+ * 
+ * Detection Strategies:
+ * - URL hash/search parameter changes
+ * - DOM content mutations
+ * - Periodic content scanning
+ * - Navigation event listening
+ * 
+ * @class EmailObserver
+ * @version 2.0.0
+ * @author Emma AI Team
+ */
+
 // email-observer.js - Email change detection module
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 

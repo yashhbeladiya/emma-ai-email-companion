@@ -1,3 +1,21 @@
+/**
+ * Main Content Script - AI Email Companion Entry Point
+ * 
+ * This is the primary content script that initializes the Emma AI Email Companion
+ * on supported email platforms. It coordinates all modules and manages the
+ * overall extension lifecycle within the email page context.
+ * 
+ * Features:
+ * - Detects and initializes on supported email sites
+ * - Coordinates email detection and analysis
+ * - Manages UI components (floating icon, sidebar)
+ * - Handles compose assistance
+ * - Orchestrates module communication
+ * 
+ * @version 2.0.0
+ * @author Emma AI Team
+ */
+
 // content.js - Main entry point for AI Email Companion
 (function() {
   'use strict';

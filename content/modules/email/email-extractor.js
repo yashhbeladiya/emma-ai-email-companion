@@ -1,3 +1,29 @@
+/**
+ * Email Data Extraction Module
+ * 
+ * Handles extraction of email content and metadata from various email platforms.
+ * Supports Gmail and Outlook variants with platform-specific selectors and logic.
+ * 
+ * Features:
+ * - Multi-platform email extraction (Gmail, Outlook)
+ * - Intelligent sender detection
+ * - Subject line extraction
+ * - Email body content processing
+ * - Thread and conversation handling
+ * - Timestamp extraction
+ * - Attachment detection
+ * - Reply chain analysis
+ * 
+ * Platform Support:
+ * - Gmail (mail.google.com)
+ * - Outlook Web (outlook.live.com)
+ * - Outlook Office 365 (outlook.office.com)
+ * 
+ * @class EmailExtractor
+ * @version 2.0.0
+ * @author Emma AI Team
+ */
+
 // email-extractor.js - Email data extraction module with improved sender detection
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 

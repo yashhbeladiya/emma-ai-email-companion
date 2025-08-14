@@ -1,3 +1,39 @@
+/**
+ * Compose Assistant Module
+ * 
+ * Provides intelligent writing assistance during email composition.
+ * Offers real-time suggestions, tone analysis, and contextual improvements
+ * to enhance email communication quality and effectiveness.
+ * 
+ * Features:
+ * - Real-time composition analysis
+ * - Tone and style suggestions
+ * - Context-aware reply assistance
+ * - Smart text completion
+ * - Template generation
+ * - Grammar and clarity improvements
+ * - Professional formatting
+ * - Multi-platform integration
+ * 
+ * Assistance Types:
+ * - Reply Context Analysis
+ * - Tone Matching
+ * - Professional Templates
+ * - Smart Suggestions
+ * - Auto-completion
+ * - Style Improvements
+ * 
+ * Integration:
+ * - Gmail compose interface
+ * - Outlook compose interface
+ * - Real-time typing detection
+ * - Background processing
+ * 
+ * @class ComposeAssistant
+ * @version 2.0.0
+ * @author Emma AI Team
+ */
+
 // compose-assistant.js - Enterprise-grade compose assistance module
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 

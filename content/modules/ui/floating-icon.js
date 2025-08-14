@@ -1,3 +1,31 @@
+/**
+ * Floating Icon UI Component
+ * 
+ * Creates and manages the floating AI assistant icon that provides quick access
+ * to Emma's features. The icon appears on email pages and serves as the primary
+ * entry point for user interaction.
+ * 
+ * Features:
+ * - Responsive floating button
+ * - Smooth animations and transitions
+ * - Notification badges for alerts
+ * - Accessibility support
+ * - Mobile-optimized sizing
+ * - Auto-positioning logic
+ * - Theme-aware styling
+ * 
+ * Functionality:
+ * - Click to toggle sidebar
+ * - Visual feedback on hover
+ * - Notification indicators
+ * - Smooth show/hide animations
+ * - Responsive positioning
+ * 
+ * @class FloatingIcon
+ * @version 2.0.0
+ * @author Emma AI Team
+ */
+
 // floating-icon.js - Floating icon UI component
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 

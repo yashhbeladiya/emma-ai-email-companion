@@ -1,3 +1,36 @@
+/**
+ * Sidebar UI Component
+ * 
+ * Main interface panel that displays email analysis results, AI insights,
+ * and interactive features. Provides a comprehensive view of Emma's capabilities
+ * in a slide-out panel format.
+ * 
+ * Features:
+ * - Responsive slide-out panel
+ * - Email analysis display
+ * - Quick reply interfaces
+ * - Meeting information
+ * - Action item tracking
+ * - Compose assistance
+ * - Settings integration
+ * - Smooth animations
+ * - Mobile-responsive design
+ * - Keyboard navigation
+ * 
+ * Content Sections:
+ * - Email summary and insights
+ * - Intent and tone badges
+ * - Quick reply suggestions
+ * - Action items checklist
+ * - Meeting details
+ * - Attachment suggestions
+ * - Compose assistance tools
+ * 
+ * @class Sidebar
+ * @version 2.0.0
+ * @author Emma AI Team
+ */
+
 // sidebar.js - Sidebar UI component
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 

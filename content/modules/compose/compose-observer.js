@@ -1,3 +1,37 @@
+/**
+ * Compose Observer Module
+ * 
+ * Monitors email pages for compose window events and manages compose assistance
+ * integration. Detects when users start composing emails and activates
+ * appropriate AI assistance features.
+ * 
+ * Features:
+ * - Real-time compose window detection
+ * - Context extraction from reply chains
+ * - Automatic assistant activation
+ * - Platform-specific integration
+ * - Memory leak prevention
+ * - Performance optimization
+ * 
+ * Detection Capabilities:
+ * - New email composition
+ * - Reply composition
+ * - Forward composition
+ * - Draft restoration
+ * - Compose window changes
+ * 
+ * Context Handling:
+ * - Original email extraction
+ * - Reply chain analysis
+ * - Sender information
+ * - Subject line context
+ * - Thread history
+ * 
+ * @class ComposeObserver
+ * @version 2.0.0
+ * @author Emma AI Team
+ */
+
 // compose-observer.js - Compose window detection module with complete context handling
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 

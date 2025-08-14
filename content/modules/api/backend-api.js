@@ -1,3 +1,31 @@
+/**
+ * Backend API Communication Module
+ * 
+ * Handles all communication with the Emma AI backend services.
+ * Provides both real API integration and mock responses for development.
+ * 
+ * Features:
+ * - RESTful API communication
+ * - Automatic fallback to mock responses
+ * - Request/response formatting
+ * - Error handling and retry logic
+ * - Intent, tone, and summary analysis
+ * - Reply generation and composition assistance
+ * 
+ * API Endpoints:
+ * - /api/email/intent - Email intent classification
+ * - /api/email/tone - Tone and sentiment analysis
+ * - /api/email/summary - Email summarization
+ * - /api/reply/quick - Quick reply generation
+ * - /api/email/compose - Compose assistance
+ * - /api/attachments/suggest - Attachment suggestions
+ * - /api/meeting/extract - Meeting information extraction
+ * 
+ * @class BackendAPI
+ * @version 2.0.0
+ * @author Emma AI Team
+ */
+
 // backend-api.js - API communication module
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 
@@ -71,6 +99,12 @@ window.AIEmailCompanion.BackendAPI = class {
     };
   }
 
+  /**
+   * Makes an API call to the backend service with fallback to mock data
+   * @param {string} endpoint - The API endpoint to call
+   * @param {Object} data - The data to send to the API
+   * @returns {Promise<Object>} API response or mock data
+   */
   async callAPI(endpoint, data) {
     const url = this.baseUrl + endpoint;
     
@@ -106,7 +140,11 @@ window.AIEmailCompanion.BackendAPI = class {
     }
   }
 
-  // Mock data generation methods
+  /**
+   * Determines the intent/purpose of an email based on content analysis
+   * @param {Object} data - Email data containing subject and body
+   * @returns {string} The determined intent category
+   */
   determineIntent(data) {
     const text = (data.subject + ' ' + data.body).toLowerCase();
     const intents = window.AIEmailCompanion.Constants.EMAIL_INTENTS;
@@ -119,6 +157,11 @@ window.AIEmailCompanion.BackendAPI = class {
     return intents.GENERAL;
   }
 
+  /**
+   * Analyzes the tone and sentiment of an email
+   * @param {Object} data - Email data containing subject and body
+   * @returns {string} The determined tone category
+   */
   determineTone(data) {
     const text = (data.subject + ' ' + data.body).toLowerCase();
     const tones = window.AIEmailCompanion.Constants.EMAIL_TONES;

@@ -1,3 +1,39 @@
+/**
+ * Local Calendar Management Module
+ * 
+ * Manages calendar events and reminders locally within the browser.
+ * Provides calendar functionality for meeting detection and scheduling
+ * without requiring external calendar API access.
+ * 
+ * Features:
+ * - Local event storage using chrome.storage
+ * - Event creation and management
+ * - Reminder system with notifications
+ * - Meeting extraction from emails
+ * - Calendar event suggestions
+ * - Event validation and formatting
+ * - Conflict detection
+ * - Export capabilities
+ * 
+ * Event Management:
+ * - Add/edit/delete events
+ * - Recurring event support
+ * - Reminder notifications
+ * - Event search and filtering
+ * - Data persistence
+ * - Import/export functionality
+ * 
+ * Integration:
+ * - Email meeting detection
+ * - One-click event creation
+ * - Notification system
+ * - Background sync
+ * 
+ * @class LocalCalendar
+ * @version 2.0.0
+ * @author Emma AI Team
+ */
+
 // local-calendar.js - Calendar functionality
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 

@@ -1,3 +1,25 @@
+/**
+ * Global Constants Module
+ * 
+ * Central repository for all configuration constants, settings, and shared values
+ * used throughout the Emma AI Email Companion extension.
+ * 
+ * Categories:
+ * - API Configuration (endpoints, timeouts)
+ * - Storage Keys (localStorage, chrome.storage)
+ * - Supported Sites (Gmail, Outlook variants)
+ * - UI States and Transitions
+ * - Email Intent Classifications
+ * - Tone Analysis Categories
+ * - Visual Elements (emojis, icons)
+ * - Timing Constants (delays, intervals)
+ * - Default Settings
+ * 
+ * @namespace Constants
+ * @version 2.0.0
+ * @author Emma AI Team
+ */
+
 // constants.js - Global constants for AI Email Companion
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 

@@ -1,3 +1,33 @@
+/**
+ * Email Analysis Module
+ * 
+ * Core analysis engine that processes emails using AI services and generates
+ * comprehensive insights including intent, tone, summaries, and actionable items.
+ * 
+ * Features:
+ * - AI-powered email analysis (intent, tone, sentiment)
+ * - Smart summarization of email content
+ * - Action item extraction and tracking
+ * - Quick reply generation
+ * - Meeting detection and calendar integration
+ * - Attachment suggestions
+ * - No-reply email detection
+ * - Enterprise-grade error handling
+ * - Responsive UI generation
+ * 
+ * Analysis Types:
+ * - Intent Classification (meeting, question, task, etc.)
+ * - Tone Analysis (formal, casual, urgent, etc.)
+ * - Content Summarization
+ * - Action Item Extraction
+ * - Meeting Information Extraction
+ * - Reply Suggestions Generation
+ * 
+ * @class EmailAnalyzer
+ * @version 2.0.0
+ * @author Emma AI Team
+ */
+
 // email-analyzer.js - Email analysis module with enterprise-grade error handling
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 

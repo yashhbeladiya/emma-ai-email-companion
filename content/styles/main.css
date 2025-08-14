@@ -1,3 +1,32 @@
+/**
+ * Main Styles - Emma AI Email Companion
+ * 
+ * Core styling foundation for the Emma extension interface.
+ * Establishes design system variables, base styles, and global
+ * component styling for consistent visual experience.
+ * 
+ * Features:
+ * - CSS custom properties (variables) for theming
+ * - Responsive design principles
+ * - Accessibility-compliant color contrasts
+ * - Modern typography using Inter font
+ * - Component-based architecture
+ * - Dark/light mode support
+ * - Animation and transition systems
+ * 
+ * Structure:
+ * - CSS Variables (colors, spacing, timing)
+ * - Base element styles
+ * - Component foundational styles
+ * - Responsive breakpoints
+ * - Utility classes
+ * - Print styles
+ * - Accessibility enhancements
+ * 
+ * @version 2.0.0
+ * @author Emma AI Team
+ */
+
 /* main.css - Main styles for AI Email Companion - Enterprise Grade */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 

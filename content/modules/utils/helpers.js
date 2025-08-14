@@ -1,3 +1,26 @@
+/**
+ * Utility Helper Functions Module
+ * 
+ * Collection of utility functions used throughout the Emma AI Email Companion.
+ * Provides common functionality for DOM manipulation, data processing,
+ * email platform detection, and general utilities.
+ * 
+ * Functions:
+ * - debounce() - Prevents excessive function calls
+ * - generateId() - Creates unique identifiers
+ * - sanitizeText() - Cleans and processes text content
+ * - isOnSupportedSite() - Detects supported email platforms
+ * - getEmailPlatform() - Identifies current email platform
+ * - extractTextFromElement() - Extracts clean text from DOM
+ * - formatDate() - Date formatting utilities
+ * - truncateText() - Text truncation with ellipsis
+ * - validateEmail() - Email address validation
+ * 
+ * @namespace Helpers
+ * @version 2.0.0
+ * @author Emma AI Team
+ */
+
 // helpers.js - Utility functions
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 

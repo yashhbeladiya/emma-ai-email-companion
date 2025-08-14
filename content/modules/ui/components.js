@@ -1,3 +1,33 @@
+/**
+ * Reusable UI Components Module
+ * 
+ * Collection of reusable UI components used throughout the Emma interface.
+ * Provides consistent styling and behavior for common elements like
+ * loading states, analysis sections, and interactive components.
+ * 
+ * Components:
+ * - Loading States (spinners, progress indicators)
+ * - Analysis Headers (intent/tone badges)
+ * - Summary Sections (email summaries with key points)
+ * - Reply Components (quick reply suggestions)
+ * - Meeting Sections (calendar integration UI)
+ * - Action Items (task tracking interface)
+ * - Status Indicators (processing states)
+ * - Interactive Elements (buttons, toggles)
+ * 
+ * Features:
+ * - Consistent design language
+ * - Accessibility compliance
+ * - Responsive layouts
+ * - Animation support
+ * - Theme integration
+ * - Modular architecture
+ * 
+ * @namespace Components
+ * @version 2.0.0
+ * @author Emma AI Team
+ */
+
 // components.js - Reusable UI components
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 
