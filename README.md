@@ -1,4 +1,4 @@
-# Emma - AI Email Companion
+# Emma - Your AI Email Companion
 
 ## Overview
 
