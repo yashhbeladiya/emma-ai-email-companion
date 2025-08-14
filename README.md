@@ -276,13 +276,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For support, please:
 - Open an issue on GitHub
-- Email: beladiya,y@northeastern.edu
+- Email: beladiya.y@northeastern.edu
 - Documentation: [Wiki](https://github.com/yashhbeladiya/emma-ai-email-companion/wiki)
 
 ## Acknowledgments
 
 - Built with modern web technologies
-- Icons from [Heroicons](https://heroicons.com/)
 - Inspired by productivity enhancement tools
 - Thanks to all contributors and beta testers
 
