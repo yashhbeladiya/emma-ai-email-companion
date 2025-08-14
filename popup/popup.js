@@ -1,3 +1,38 @@
+/**
+ * Extension Popup Interface
+ * 
+ * Manages the extension popup UI that appears when users click the Emma icon
+ * in the Chrome toolbar. Provides access to settings, status information,
+ * and extension controls.
+ * 
+ * Features:
+ * - Extension settings management
+ * - Current site detection and status
+ * - Feature toggle controls
+ * - Backend connection status
+ * - Help and documentation links
+ * - Version information
+ * - Quick actions and shortcuts
+ * 
+ * Settings Management:
+ * - Auto-summarize toggle
+ * - Smart replies configuration
+ * - Tone assistance preferences
+ * - Notification settings
+ * - Backend URL configuration
+ * - Privacy preferences
+ * 
+ * Status Display:
+ * - Current site compatibility
+ * - Extension activation status
+ * - API connection health
+ * - Recent activity summary
+ * 
+ * @class PopupManager
+ * @version 2.0.0
+ * @author Emma AI Team
+ */
+
 // popup.js - Enhanced popup with connection to content script
 class PopupManager {
   constructor() {
