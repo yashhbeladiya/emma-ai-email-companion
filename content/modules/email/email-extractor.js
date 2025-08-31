@@ -107,12 +107,54 @@ window.AIEmailCompanion.EmailExtractor = class {
       }
     }
     
-    // Get body from the expanded message
+    // Get body from the expanded message - handle HTML content
+    let bodyText = '';
     const bodyElement = expandedMessage || 
                        this.helpers.safeQuerySelector('[data-message-id] [dir="ltr"]') ||
                        this.helpers.safeQuerySelector('.ii.gt div');
 
-    if (!subjectElement || !bodyElement) {
+    if (bodyElement) {
+      // Clone the element to avoid modifying the original
+      const clonedBody = bodyElement.cloneNode(true);
+      
+      // Remove quoted text from replies
+      const quotedText = clonedBody.querySelectorAll('.gmail_quote, .quoted-text, blockquote');
+      quotedText.forEach(el => el.remove());
+      
+      // Remove signatures if identifiable
+      const signatures = clonedBody.querySelectorAll('.gmail_signature, .signature');
+      signatures.forEach(el => el.remove());
+      
+      // Convert <br> to newlines
+      clonedBody.querySelectorAll('br').forEach(br => {
+        br.replaceWith('\n');
+      });
+      
+      // Convert <p> to double newlines
+      clonedBody.querySelectorAll('p').forEach(p => {
+        p.innerHTML = '\n' + p.innerHTML + '\n';
+      });
+      
+      // Convert links to text with URL
+      clonedBody.querySelectorAll('a').forEach(a => {
+        const href = a.getAttribute('href');
+        const text = a.textContent.trim();
+        if (href && !href.startsWith('mailto:') && text !== href) {
+          a.textContent = `${text} (${href})`;
+        }
+      });
+      
+      // Extract text content
+      bodyText = clonedBody.textContent || clonedBody.innerText || '';
+      
+      // Clean up excessive whitespace
+      bodyText = bodyText
+        .replace(/\n{3,}/g, '\n\n') // Replace multiple newlines with double
+        .replace(/[ \t]+/g, ' ') // Replace multiple spaces/tabs with single space
+        .trim();
+    }
+
+    if (!subjectElement || !bodyText) {
       console.log('Gmail elements not found');
       return null;
     }
@@ -124,13 +166,13 @@ window.AIEmailCompanion.EmailExtractor = class {
     }
 
     // Final cleanup
-    const finalSender = senderEmail || senderName;
+    const finalSender = senderName !== 'Unknown' ? senderName : (senderEmail || 'Unknown');
     
     return {
       subject: subjectElement.textContent.trim(),
-      sender: senderName !== 'Unknown' ? senderName : finalSender,
+      sender: finalSender,
       senderEmail: senderEmail,
-      body: bodyElement.textContent.trim(),
+      body: bodyText,
       timestamp: Date.now()
     };
   }
