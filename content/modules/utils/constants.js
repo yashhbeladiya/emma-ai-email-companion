@@ -114,9 +114,22 @@ window.AIEmailCompanion.Constants = {
   
   // Default Settings
   DEFAULT_SETTINGS: {
-    autoSummarize: true,
-    smartReplies: true,
-    toneAssistance: true,
-    notifications: true
+    // Core Features
+    keyPoints: true,
+    quickReplies: true,
+    composeAssistant: true,
+    emailAnalysis: true,
+    meetingDetection: true
+  },
+
+  // Feature Descriptions
+  FEATURE_DESCRIPTIONS: {
+    keyPoints: 'Extract and display key points from emails',
+    quickReplies: 'Generate smart reply suggestions',
+    composeAssistant: 'AI assistance while composing emails',
+    emailAnalysis: 'Analyze email intent and tone',
+    meetingDetection: 'Detect and extract meeting information',
+    previewMode: 'Show generated content in preview before using',
+    debugMode: 'Enable detailed logging for troubleshooting'
   }
 };
