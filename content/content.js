@@ -73,6 +73,9 @@
     init() {
       console.log('Initializing AI Email Companion...');
       
+      // Load settings first
+      this.loadInitialSettings();
+      
       // Create UI elements
       this.floatingIcon.create();
       this.sidebar.create();
@@ -90,19 +93,61 @@
       this.updateEmailsProcessedCount();
     }
 
+    async loadInitialSettings() {
+      try {
+        // Use Promise wrapper for chrome.storage.sync.get
+        const result = await new Promise((resolve) => {
+          chrome.storage.sync.get(null, (items) => {
+            resolve(items);
+          });
+        });
+        
+        const defaultSettings = window.AIEmailCompanion.Constants.DEFAULT_SETTINGS;
+        const settings = { ...defaultSettings, ...result };
+        
+        // Apply initial settings
+        this.updateSettings(settings);
+        
+        console.log('Initial settings loaded:', settings);
+      } catch (error) {
+        console.error('Failed to load initial settings:', error);
+        // Use default settings
+        this.updateSettings(window.AIEmailCompanion.Constants.DEFAULT_SETTINGS);
+      }
+    }
+
     setupEventListeners() {
       // Listen for messages from extension
       chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         switch (request.action) {
+          case 'ping':
+            sendResponse({ status: 'alive', features: Object.keys(window.AIEmailCompanion.settings || {}) });
+            break;
           case 'toggleSidebar':
             this.sidebar.toggle();
+            sendResponse({ success: true });
             break;
           case 'updateSettings':
             this.updateSettings(request.settings);
+            sendResponse({ success: true });
             break;
           case 'analyzeSelection':
             this.analyzeSelectedText(request.text);
+            sendResponse({ success: true });
             break;
+          case 'getSettings':
+            // Return current global settings to popup
+            sendResponse({ settings: window.globalSettings || window.AIEmailCompanion.settings || {} });
+            break;
+        }
+        return true; // Keep the message channel open for async responses
+      });
+
+      // Listen for storage changes
+      chrome.storage.onChanged.addListener((changes, namespace) => {
+        if (namespace === 'sync') {
+          console.log('Storage changed, updating settings...');
+          this.loadInitialSettings();
         }
       });
       
@@ -215,8 +260,65 @@
 
     updateSettings(settings) {
       console.log('Settings updated:', settings);
+      
+      // Store settings globally for use by other modules
+      window.AIEmailCompanion.settings = settings;
+      window.globalSettings = settings; // For popup access
+      
       // Apply settings changes
-      // This could affect how the extension behaves
+      if (settings.keyPoints === false) {
+        console.log('Key points disabled');
+        // Disable key points extraction
+        this.sidebar.updateFeatureVisibility('keyPoints', false);
+      } else {
+        this.sidebar.updateFeatureVisibility('keyPoints', true);
+      }
+      
+      if (settings.quickReplies === false) {
+        console.log('Quick replies disabled');
+        // Hide reply suggestions
+        this.sidebar.updateFeatureVisibility('replies', false);
+      } else {
+        this.sidebar.updateFeatureVisibility('replies', true);
+      }
+      
+      if (settings.composeAssistant === false) {
+        console.log('Compose assistant disabled');
+        // Disable compose assistance features
+        this.sidebar.updateFeatureVisibility('compose', false);
+      } else {
+        this.sidebar.updateFeatureVisibility('compose', true);
+      }
+
+      if (settings.emailAnalysis === false) {
+        console.log('Email analysis disabled');
+        // Disable email analysis features
+        this.sidebar.updateFeatureVisibility('analysis', false);
+      } else {
+        this.sidebar.updateFeatureVisibility('analysis', true);
+      }
+
+      if (settings.meetingDetection === false) {
+        console.log('Meeting detection disabled');
+        // Disable meeting features
+        this.sidebar.updateFeatureVisibility('meeting', false);
+      } else {
+        this.sidebar.updateFeatureVisibility('meeting', true);
+      }
+
+      // Store last activity
+      window.AIEmailCompanion.Helpers.setStorageData('lastActivity', Date.now());
+      
+      // Refresh sidebar content if it's open
+      if (this.sidebar && this.sidebar.isOpen() && this.currentEmailData) {
+        console.log('Refreshing sidebar content with new settings...');
+        setTimeout(() => {
+          this.handleEmailChange(this.currentEmailId);
+        }, 100);
+      }
+      
+      // Notify other components about settings change
+      document.dispatchEvent(new CustomEvent('settingsUpdated', { detail: settings }));
     }
 
     async updateEmailsProcessedCount() {
