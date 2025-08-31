@@ -122,32 +122,40 @@ window.AIEmailCompanion.ComposeObserver = class {
     let isReply = false;
     
     if (site.isGmail) {
-      // Check for reply indicators in Gmail
-      const replyIndicators = document.querySelector('.ajl') || // Reply button clicked
-                             document.querySelector('.gJ') || // Reply context
-                             document.querySelector('.gmail_quote') || // Quoted text
-                             document.querySelector('[aria-label*="Reply"]'); // Reply compose
-      isReply = !!replyIndicators;
+      // More specific checks for Gmail
+      const replyContext = document.querySelector('.gmail_quote') || // Quoted text present
+                          document.querySelector('[aria-label*="Reply to"]') || // Reply compose window
+                          document.querySelector('.nH.Hd .adn'); // Reply container
+      
+      // Also check for compose window type indicators
+      const composeTitle = document.querySelector('.nH.Hd .Hp');
+      const isNewCompose = composeTitle && composeTitle.textContent.trim() === 'New Message';
+      
+      isReply = !!replyContext && !isNewCompose;
     } else if (site.isOutlook) {
       // Check for reply indicators in Outlook
       const replyIndicators = document.querySelector('.quoted-text') ||
                              document.querySelector('[id*="divRplyFwdMsg"]') ||
-                             document.querySelector('[aria-label*="Reply"]');
+                             document.querySelector('[data-testid="compose-subject"]')?.value?.startsWith('RE:');
       isReply = !!replyIndicators;
     }
     
-    // Only return reply context if we're actually replying AND have email data
+    // Only return reply context if we're actually replying AND have valid email data
     if (isReply && window.AIEmailCompanion.main?.currentEmailData) {
       const emailData = window.AIEmailCompanion.main.currentEmailData;
-      return {
-        originalSubject: emailData.subject || 'Previous Email',
-        originalSender: emailData.sender || 'Sender',
-        originalBody: (emailData.body || '').substring(0, 500),
-        replyType: 'reply'
-      };
+      
+      // Validate that we have meaningful email data
+      if (emailData.subject && emailData.sender && emailData.subject !== 'No subject') {
+        return {
+          originalSubject: emailData.subject,
+          originalSender: emailData.sender,
+          originalBody: (emailData.body || '').substring(0, 500),
+          replyType: 'reply'
+        };
+      }
     }
     
-    // Otherwise it's a new compose
+    // For any other case (new compose, invalid data, etc.), return compose mode
     return { replyType: 'compose' };
   }
 
