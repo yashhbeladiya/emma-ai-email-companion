@@ -29,13 +29,37 @@
  */
 
 // email-analyzer.js - Email analysis module with enterprise-grade error handling
+// email-analyzer.js - Email analysis module using Groq API
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 
 window.AIEmailCompanion.EmailAnalyzer = class {
   constructor() {
-    this.api = new window.AIEmailCompanion.BackendAPI();
+    console.log('EmailAnalyzer constructor called');
+    console.log('Attempting to create GroqAPI instance...');
+    
+    // Check if GroqAPI exists
+    if (!window.AIEmailCompanion.GroqAPI) {
+      console.error('GroqAPI not found! Available classes:', Object.keys(window.AIEmailCompanion));
+      // Fallback to BackendAPI if GroqAPI is not available
+      this.groqAPI = window.AIEmailCompanion.BackendAPI ? new window.AIEmailCompanion.BackendAPI() : null;
+      console.log('Using BackendAPI as fallback');
+    } else {
+      this.groqAPI = new window.AIEmailCompanion.GroqAPI();
+      console.log('GroqAPI instance created successfully');
+    }
+    
     this.components = window.AIEmailCompanion.Components;
-    this.calendar = new window.AIEmailCompanion.LocalCalendar();
+    this.calendar = new window.AIEmailCompanion.CalendarIntegration();
+    
+    // Track current email context for reset functionality
+    this.currentEmailContext = null;
+    
+    // Initialize settings
+    this.settings = {};
+    this.loadSettings();
+    
+    // Setup sidebar close listener for reset functionality
+    this.setupSidebarResetListener();
   }
 
   async analyzeEmail(emailData) {
@@ -46,45 +70,96 @@ window.AIEmailCompanion.EmailAnalyzer = class {
         return this.getDefaultAnalysisResults();
       }
 
-      console.log('Analyzing email:', emailData);
+      console.log('Analyzing email with Groq API:', emailData);
       
-      // Check if it's a no-reply email first
-      if (this.isNoReplyEmail(emailData)) {
-        return {
-          isNoReply: true,
-          intentData: { data: { intent: 'Automated' } },
-          toneData: { data: { tone: 'System' } },
-          summaryData: { data: { points: this.generateSummaryPoints(emailData) } }
-        };
-      }
+      // Get comprehensive analysis from Groq
+      const aiAnalysis = await this.groqAPI.analyzeEmail(emailData);
       
-      // Get all analysis from backend in parallel
-      const [intentData, toneData, summaryData, repliesData, meetingInfo, actionItems] = await Promise.all([
-        this.api.callAPI('/api/email/intent', emailData),
-        this.api.callAPI('/api/email/tone', emailData),
-        this.api.callAPI('/api/email/summary', emailData),
-        this.api.callAPI('/api/reply/quick', emailData),
-        this.api.callAPI('/api/meeting/extract', emailData),
-        this.api.callAPI('/api/action', emailData)
-      ]);
-
-      console.log('Email analysis results:', {
-        intentData, toneData, summaryData, repliesData, meetingInfo, actionItems
-      });
-
-      return {
-        intentData,
-        toneData,
-        summaryData,
-        repliesData,
-        meetingInfo,
-        actionItems,
-        isNoReply: false
-      };
+      console.log('Groq API analysis results:', aiAnalysis);
+      
+      // Transform AI response to our format
+      return this.transformAIResponse(aiAnalysis, emailData);
+      
     } catch (error) {
       console.error('Error analyzing email:', error);
       return this.getDefaultAnalysisResults();
     }
+  }
+
+  transformAIResponse(aiAnalysis, emailData) {
+    return {
+      intentData: {
+        success: true,
+        data: {
+          intent: aiAnalysis.intent,
+          confidence: 0.95
+        }
+      },
+      toneData: {
+        success: true,
+        data: {
+          tone: aiAnalysis.tone,
+          sentiment: aiAnalysis.sentiment,
+          formality: aiAnalysis.contextClues?.formality
+        }
+      },
+      summaryData: {
+        success: true,
+        data: {
+          summary: aiAnalysis.summary.brief,
+          points: aiAnalysis.summary.points
+        }
+      },
+      repliesData: {
+        success: true,
+        data: {
+          replies: aiAnalysis.quickReplies.map(reply => ({
+            text: reply.text,
+            tone: reply.tone,
+            intent: reply.intent
+          }))
+        }
+      },
+      attachmentSuggestions: {
+        success: true,
+        data: {
+          suggestions: aiAnalysis.attachmentSuggestions.map(att => ({
+            description: att.type,
+            reason: att.reason
+          }))
+        }
+      },
+      meetingInfo: {
+        success: true,
+        data: {
+          hasMeeting: aiAnalysis.meeting.detected,
+          ...aiAnalysis.meeting.details,
+          description: aiAnalysis.meeting.details?.purpose || 'Meeting detected'
+        }
+      },
+      actionItems: {
+        success: true,
+        data: {
+          actions: aiAnalysis.actionItems.map(item => ({
+            text: item.text,
+            deadline: item.deadline,
+            priority: item.priority,
+            link: null
+          }))
+        }
+      },
+      // Additional AI insights
+      aiInsights: {
+        priority: aiAnalysis.priority,
+        requiresResponse: aiAnalysis.requiresResponse,
+        estimatedResponseTime: aiAnalysis.estimatedResponseTime,
+        contextClues: aiAnalysis.contextClues,
+        suggestedFollowUp: aiAnalysis.suggestedFollowUp,
+        keywords: aiAnalysis.keywords,
+        entities: aiAnalysis.entities
+      },
+      isNoReply: aiAnalysis.isNoReply
+    };
   }
 
   getDefaultAnalysisResults() {
@@ -96,22 +171,9 @@ window.AIEmailCompanion.EmailAnalyzer = class {
       attachmentSuggestions: { data: { suggestions: [] } },
       meetingInfo: { data: { hasMeeting: false } },
       actionItems: { data: { actions: [] } },
+      aiInsights: {},
       isNoReply: false
     };
-  }
-
-  capitalizeWord(word) {
-    if (!word) return '';
-    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-  }
-
-  generateSummaryPoints(emailData) {
-    if (!emailData || !emailData.body) return ['Email content not available'];
-    
-    const sentences = emailData.body.split(/[.!?]+/).filter(s => s.trim().length > 20);
-    if (sentences.length === 0) return [emailData.subject || 'Email received'];
-    
-    return sentences.slice(0, 3).map(s => s.trim());
   }
 
   buildAnalysisUI(analysisResults, emailData) {
@@ -124,9 +186,11 @@ window.AIEmailCompanion.EmailAnalyzer = class {
       intentData, 
       toneData, 
       summaryData, 
-      repliesData,
+      repliesData, 
+      attachmentSuggestions, 
       meetingInfo, 
       actionItems,
+      aiInsights,
       isNoReply 
     } = analysisResults;
     
@@ -138,9 +202,19 @@ window.AIEmailCompanion.EmailAnalyzer = class {
     // Generate title from email data
     const emailTitle = this.generateEmailTitle(emailData);
     
+    // Priority indicator if high priority
+    const priorityBadge = aiInsights?.priority === 'High' ? 
+      '<span class="priority-badge high">⚡ High Priority</span>' : '';
+    
+    const responseTime = aiInsights?.estimatedResponseTime ?
+      `<span class="response-time-badge">${aiInsights.estimatedResponseTime}</span>` : '';
+    
     html += `
       <div class="email-header-section">
-        <h3 class="email-main-title">${emailTitle}</h3>
+        <div class="email-title-row">
+          <h3 class="email-main-title">${emailTitle}</h3>
+          ${priorityBadge}
+        </div>
         <div class="email-metadata">
           <span class="metadata-item sender-info">
             <svg class="icon" viewBox="0 0 20 20" fill="currentColor">
@@ -152,15 +226,16 @@ window.AIEmailCompanion.EmailAnalyzer = class {
           <span class="metadata-item intent-badge ${this.getIntentClass(intentData?.data?.intent)}">
             ${window.AIEmailCompanion.Constants.INTENT_EMOJIS[intentData?.data?.intent] || '📧'} ${intentData?.data?.intent || 'Email'}
           </span>
-          <span class="metadata-item tone-badge ${this.getToneClass(toneData?.data?.emotions.primary)}">
-            ${this.capitalizeWord(toneData?.data?.emotions.primary) || 'Normal'}
+          <span class="metadata-item tone-badge ${this.getToneClass(toneData?.data?.tone)}">
+            ${toneData?.data?.tone || 'Normal'}
           </span>
+          ${responseTime}
         </div>
       </div>
     `;
     
     // Check if it's a no-reply email
-    if (isNoReply || this.isNoReplyEmail(emailData)) {
+    if (isNoReply) {
       html += `
         <div class="no-reply-notice">
           <div class="notice-header">
@@ -178,12 +253,31 @@ window.AIEmailCompanion.EmailAnalyzer = class {
       // Still show summary for no-reply emails
       html += this.components.createSummarySection(summaryData);
     } else {
+      // Add AI insights section if available
+      if (aiInsights?.contextClues?.relationship) {
+        html += `
+          <div class="ai-insights-section">
+            <div class="insight-badges">
+              ${aiInsights.contextClues.relationship !== 'Unknown' ? 
+                `<span class="insight-badge relationship">${this.getRelationshipIcon(aiInsights.contextClues.relationship)} ${aiInsights.contextClues.relationship}</span>` : ''}
+              ${aiInsights.requiresResponse ? 
+                `<span class="insight-badge response-required">↩️ Response Expected</span>` : ''}
+            </div>
+          </div>
+        `;
+      }
+      
       // Add summary
       html += this.components.createSummarySection(summaryData);
       
       // Add action items if present
-      if (actionItems?.data?.action_items?.length > 0) {
-        html += this.createActionItemsSection(actionItems);
+      if (actionItems?.data?.actions?.length > 0) {
+        html += this.createEnhancedActionItemsSection(actionItems);
+      }
+      
+            // Add suggested follow-up if present
+      if (aiInsights?.suggestedFollowUp?.action) {
+        html += this.createFollowUpSection(aiInsights.suggestedFollowUp);
       }
       
       // Add quick replies
@@ -192,12 +286,17 @@ window.AIEmailCompanion.EmailAnalyzer = class {
     
     // Add meeting section if detected
     if (meetingInfo?.data?.hasMeeting) {
-      html += this.components.createMeetingSection(meetingInfo);
+      html += this.createEnhancedMeetingSection(meetingInfo);
     }
     
     // Add attachment suggestions
-    if (actionItems?.data?.attachments.length > 0) {
-      html += this.createAttachmentSection(actionItems);
+    if (attachmentSuggestions?.data?.suggestions?.length > 0) {
+      html += this.createAttachmentSection(attachmentSuggestions);
+    }
+    
+    // Add keywords/entities if available
+    if (aiInsights?.keywords?.length > 0 || aiInsights?.entities) {
+      html += this.createKeywordsSection(aiInsights);
     }
     
     html += '</div>';
@@ -207,94 +306,30 @@ window.AIEmailCompanion.EmailAnalyzer = class {
   }
 
   generateEmailTitle(emailData) {
-    // Safe access to email data
     if (!emailData || !emailData.subject) {
       return 'Email Analysis';
     }
-
-    console.log('Generating title for email:', emailData.subject);
     
-    // Clean and truncate subject for title
     const subject = emailData.subject || 'Untitled Email';
     const cleanSubject = subject
-      .replace(/^(Re:|RE:|Fwd:|FWD:|Fw:|FW:)\s*/gi, '') // Remove common prefixes
+      .replace(/^(Re:|RE:|Fwd:|FWD:|Fw:|FW:)\s*/gi, '')
       .trim();
     
-    // Truncate if too long
     return cleanSubject.length > 60 ? 
       cleanSubject.substring(0, 57) + '...' : 
       cleanSubject;
   }
 
-  isNoReplyEmail(emailData) {
-    if (!emailData) return false;
-    
-    const sender = (emailData.sender || '').toLowerCase();
-    const senderEmail = (emailData.senderEmail || '').toLowerCase();
-    const subject = (emailData.subject || '').toLowerCase();
-    const body = (emailData.body || '').toLowerCase();
-    
-    // Strong indicators that this IS a no-reply email
-    const noReplyPatterns = [
-      'no-reply@', 'noreply@', 'do-not-reply@', 'donotreply@',
-      'no_reply@', 'do_not_reply@', 'mailer-daemon@',
-      'postmaster@', 'auto-confirm@', 'auto-notification@',
-      'notifications@', 'alert@', 'alerts@', 'system@',
-      'automated@', 'auto@', 'info@', 'news@', 'newsletter@'
-    ];
-    
-    // Check if sender email matches no-reply patterns
-    const isNoReplyEmail = noReplyPatterns.some(pattern => 
-      senderEmail.includes(pattern) || sender.includes(pattern)
-    );
-    
-    // Also check if sender name itself contains these keywords
-    const noReplyNamePatterns = [
-      'no-reply', 'noreply', 'do-not-reply', 'donotreply',
-      'system notification', 'automated message', 'auto-generated'
-    ];
-    
-    const isNoReplyName = noReplyNamePatterns.some(pattern => 
-      sender.includes(pattern)
-    );
-    
-    // Check for human indicators that suggest this IS a reply-able email
-    const humanIndicators = [
-      'hi ', 'hello ', 'dear ', 'hey ', 
-      'thanks', 'thank you', 'cheers', 'regards',
-      'it was great', 'nice to meet', 'enjoyed our',
-      'would love to', 'let me know', 'looking forward',
-      'coffee', 'lunch', 'meeting', 'chat'
-    ];
-    
-    const hasHumanIndicators = humanIndicators.some(indicator => 
-      body.includes(indicator) || subject.includes(indicator)
-    );
-    
-    // If we have human indicators, it's likely NOT a no-reply email
-    // even if the sender email looks automated
-    if (hasHumanIndicators && !isNoReplyName) {
-      return false;
-    }
-    
-    // Check if it's clearly an automated notification
-    const automatedPatterns = [
-      'your order', 'order confirmation', 'payment receipt',
-      'invoice #', 'transaction', 'subscription',
-      'password reset', 'verify your email', 'account verification'
-    ];
-    
-    const isAutomatedContent = automatedPatterns.some(pattern => 
-      subject.includes(pattern) || body.substring(0, 200).includes(pattern)
-    );
-    
-    // Final decision: It's a no-reply if:
-    // 1. Email address is clearly no-reply AND no human indicators, OR
-    // 2. Sender name indicates no-reply, OR  
-    // 3. It's automated content with a system-like email
-    return (isNoReplyEmail && !hasHumanIndicators) || 
-           isNoReplyName || 
-           (isAutomatedContent && (isNoReplyEmail || sender.includes('@')));
+  getRelationshipIcon(relationship) {
+    const icons = {
+      'Colleague': '👥',
+      'Client': '💼',
+      'Manager': '👔',
+      'Friend': '😊',
+      'New Contact': '🆕',
+      'Unknown': '❓'
+    };
+    return icons[relationship] || '👤';
   }
 
   getIntentClass(intent) {
@@ -302,8 +337,10 @@ window.AIEmailCompanion.EmailAnalyzer = class {
       'Meeting Request': 'intent-meeting',
       'Question': 'intent-question',
       'Task Assignment': 'intent-task',
+      'Request': 'intent-request',
       'Urgent': 'intent-urgent',
-      'Automated': 'intent-automated'
+      'Thank You': 'intent-thanks',
+      'Follow-up': 'intent-followup'
     };
     return intentClasses[intent] || 'intent-general';
   }
@@ -314,17 +351,17 @@ window.AIEmailCompanion.EmailAnalyzer = class {
       'Friendly': 'tone-friendly',
       'Professional': 'tone-professional',
       'Formal': 'tone-formal',
-      'System': 'tone-system'
+      'Casual': 'tone-casual',
+      'Appreciative': 'tone-appreciative'
     };
     return toneClasses[tone] || 'tone-normal';
   }
 
-  createActionItemsSection(actionItems) {
-    const actions = actionItems.data.action_items || [];
-    console.log('Creating action items section with actions:', actions);
+  createEnhancedActionItemsSection(actionItems) {
+    const actions = actionItems.data.actions;
     
     return `
-      <div class="action-items-section">
+      <div class="action-items-section enhanced">
         <h5 class="section-title">
           <svg class="icon" viewBox="0 0 20 20" fill="currentColor">
             <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
@@ -334,14 +371,17 @@ window.AIEmailCompanion.EmailAnalyzer = class {
         </h5>
         <div class="action-items-list">
           ${actions.map((action, index) => `
-            <div class="action-item" data-index="${index}">
-              <div class="action-checkbox">
-                <input type="checkbox" id="action-${index}" />
-                <label for="action-${index}"></label>
+            <div class="action-item ${action.priority ? `priority-${action.priority.toLowerCase()}` : ''}" data-index="${index}">
+              <div class="action-item-main">
+                <div class="action-checkbox">
+                  <input type="checkbox" id="action-${index}" />
+                  <label for="action-${index}"></label>
+                </div>
+                <span class="action-text">${action.text}</span>
               </div>
-              <div class="action-content">
-                <span class="action-text">${action.task}</span>
-                ${action.link ? `<a href="${action.link}" class="action-link" target="_blank">Open →</a>` : ''}
+              <div class="action-meta">
+                ${action.deadline ? `<span class="action-deadline">📅 ${action.deadline}</span>` : ''}
+                ${action.priority ? `<span class="action-priority priority-${action.priority.toLowerCase()}">${action.priority}</span>` : ''}
               </div>
             </div>
           `).join('')}
@@ -350,7 +390,78 @@ window.AIEmailCompanion.EmailAnalyzer = class {
     `;
   }
 
-  createAttachmentSection(actionItems) {
+  createFollowUpSection(followUp) {
+    return `
+      <div class="followup-section">
+        <h5 class="section-title">
+          <svg class="icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"/>
+          </svg>
+          Suggested Follow-up
+        </h5>
+        <div class="followup-content">
+          <p class="followup-action">${followUp.action}</p>
+          <span class="followup-timing">⏰ ${followUp.timing}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  createEnhancedMeetingSection(meetingInfo) {
+    const details = meetingInfo.data;
+    
+    return `
+      <div class="meeting-section enhanced">
+        <h5 class="section-title">📅 Meeting Detected</h5>
+        <div class="meeting-info">
+          ${details.purpose ? `<p class="meeting-purpose">${details.purpose}</p>` : ''}
+          ${details.suggestedTimes?.length > 0 ? `
+            <div class="suggested-times">
+              <span class="times-label">Suggested times:</span>
+              ${details.suggestedTimes.map(time => `<span class="time-chip">${time}</span>`).join('')}
+            </div>
+          ` : ''}
+          ${details.type && details.type !== 'undefined' && details.type !== 'Undefined' && details.type.trim() !== '' ? `<p class="meeting-type">Type: ${details.type}</p>` : ''}
+          ${details.duration && details.duration !== 'undefined' && details.duration !== 'Undefined' && details.duration.trim() !== '' ? `<p class="meeting-duration">Duration: ${details.duration}</p>` : ''}
+          <button class="add-to-calendar-btn" data-meeting='${JSON.stringify(details)}'>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>Add to Calendar</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  createKeywordsSection(aiInsights) {
+    const hasKeywords = aiInsights.keywords?.length > 0;
+    const hasEntities = aiInsights.entities && Object.keys(aiInsights.entities).length > 0;
+    
+    if (!hasKeywords && !hasEntities) return '';
+    
+    return `
+      <div class="keywords-section">
+        ${hasKeywords ? `
+          <div class="keywords-list">
+            <span class="keywords-label">Keywords:</span>
+            ${aiInsights.keywords.map(keyword => `<span class="keyword-chip">${keyword}</span>`).join('')}
+          </div>
+        ` : ''}
+        ${hasEntities && aiInsights.entities.people?.length > 0 ? `
+          <div class="entities-list">
+            <span class="entities-label">People:</span>
+            ${aiInsights.entities.people.map(person => `<span class="entity-chip person">👤 ${person}</span>`).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  createAttachmentSection(attachmentSuggestions) {
     return `
       <div class="attachments-section">
         <h5 class="section-title">
@@ -360,12 +471,12 @@ window.AIEmailCompanion.EmailAnalyzer = class {
           Suggested Attachments
         </h5>
         <div class="attachment-suggestions">
-          ${actionItems.data.attachments.map(attachment => `
+          ${attachmentSuggestions.data.suggestions.map(suggestion => `
             <div class="attachment-item">
               <div class="attachment-icon">📎</div>
               <div class="attachment-details">
-                <span class="attachment-name">${attachment.description}</span>
-                <span class="attachment-reason">${attachment.reason}</span>
+                <span class="attachment-name">${suggestion.description}</span>
+                <span class="attachment-reason">${suggestion.reason}</span>
               </div>
             </div>
           `).join('')}
@@ -378,7 +489,7 @@ window.AIEmailCompanion.EmailAnalyzer = class {
     const { repliesData, meetingInfo, actionItems, isNoReply } = analysisResults;
     
     // Don't setup reply handlers for no-reply emails
-    if (!isNoReply && !this.isNoReplyEmail(emailData)) {
+    if (!isNoReply) {
       // Quick reply handlers
       analysisElement.querySelectorAll('.reply-option').forEach(option => {
         option.addEventListener('click', () => {
@@ -391,12 +502,13 @@ window.AIEmailCompanion.EmailAnalyzer = class {
       });
     }
     
-    // Action item handlers
+    // Action item handlers with completion tracking
     analysisElement.querySelectorAll('.action-checkbox input').forEach((checkbox, index) => {
       checkbox.addEventListener('change', (e) => {
         const actionItem = analysisElement.querySelector(`.action-item[data-index="${index}"]`);
         if (e.target.checked) {
           actionItem.classList.add('completed');
+          // Could save completion state to storage
         } else {
           actionItem.classList.remove('completed');
         }
@@ -435,13 +547,14 @@ window.AIEmailCompanion.EmailAnalyzer = class {
 
     if (composeArea) {
       composeArea.focus();
-      composeArea.innerHTML = replyText;
+      composeArea.innerHTML = replyText.replace(/\n/g, '<br>');
       
       // Trigger input event
       const event = new Event('input', { bubbles: true });
       composeArea.dispatchEvent(event);
       
       console.log('Reply inserted:', replyText.substring(0, 50) + '...');
+      this.components.showNotification('Quick reply inserted!', 'success');
     } else {
       this.openReplyWindow();
       setTimeout(() => {
@@ -456,6 +569,99 @@ window.AIEmailCompanion.EmailAnalyzer = class {
     if (site.isGmail) {
       const replyBtn = document.querySelector('[data-tooltip="Reply"]') ||
                       document.querySelector('[aria-label*="Reply"]');
+      if (replyBtn) replyBtn.click();
+    } else if (site.isOutlook) {
+      const replyBtn = document.querySelector('[aria-label*="Reply"]') ||
+                      document.querySelector('button[title*="Reply"]');
+      if (replyBtn) replyBtn.click();
+    }
+  }
+
+  async loadSettings() {
+    try {
+      this.settings = await new Promise((resolve) => {
+        chrome.storage.sync.get(null, (settings) => {
+          resolve({
+            autoSummarize: true,
+            smartReplies: true,
+            toneAssistance: true,
+            notifications: true,
+            previewMode: true,
+            ...settings
+          });
+        });
+      });
+      console.log('Settings loaded:', this.settings);
+    } catch (error) {
+      console.error('Error loading settings:', error);
+      // Use defaults
+      this.settings = {
+        autoSummarize: true,
+        smartReplies: true,
+        toneAssistance: true,
+        notifications: true,
+        previewMode: true
+      };
+    }
+  }
+
+  setupSidebarResetListener() {
+    // Listen for sidebar close events to reset email context
+    document.addEventListener('sidebarClosed', () => {
+      console.log('Sidebar closed, resetting email context');
+      this.resetEmailContext();
+    });
+
+    // Also listen for navigation changes (when user switches emails)
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          // Check if we're in a new email context
+          const currentUrl = window.location.href;
+          if (this.currentEmailUrl && this.currentEmailUrl !== currentUrl) {
+            console.log('Email navigation detected, resetting context');
+            this.resetEmailContext();
+          }
+          this.currentEmailUrl = currentUrl;
+        }
+      });
+    });
+
+    // Observe changes in the email container
+    const emailContainer = document.querySelector('body');
+    if (emailContainer) {
+      observer.observe(emailContainer, { childList: true, subtree: true });
+    }
+
+    // Listen for settings updates
+    document.addEventListener('settingsUpdated', (event) => {
+      this.settings = { ...this.settings, ...event.detail };
+      console.log('EmailAnalyzer settings updated:', this.settings);
+    });
+  }
+
+  resetEmailContext() {
+    this.currentEmailContext = null;
+    this.currentEmailUrl = null;
+    
+    // Clear any existing analysis in the sidebar
+    const sidebar = document.querySelector('.ai-email-sidebar');
+    if (sidebar) {
+      const analysisContainer = sidebar.querySelector('.analysis-container');
+      if (analysisContainer) {
+        analysisContainer.innerHTML = '<div class="empty-state">Select an email to analyze</div>';
+      }
+    }
+
+    // Dispatch event to notify other components
+    document.dispatchEvent(new CustomEvent('emailContextReset'));
+  }
+
+  triggerReply() {
+    const site = this.detectEmailSite();
+    if (site.isGmail) {
+      const replyBtn = document.querySelector('[data-tooltip="Reply"]') ||
+                      document.querySelector('div[role="button"][aria-label*="Reply"]');
       if (replyBtn) replyBtn.click();
     } else if (site.isOutlook) {
       const replyBtn = document.querySelector('[aria-label*="Reply"]') ||
