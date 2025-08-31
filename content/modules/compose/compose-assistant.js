@@ -39,7 +39,7 @@ window.AIEmailCompanion = window.AIEmailCompanion || {};
 
 window.AIEmailCompanion.ComposeAssistant = class {
   constructor() {
-    this.api = new window.AIEmailCompanion.BackendAPI();
+    this.groqAPI = new window.AIEmailCompanion.GroqAPI();
     this.helpers = window.AIEmailCompanion.Helpers;
     this.components = window.AIEmailCompanion.Components;
     this.typingTimer = null;
@@ -50,7 +50,20 @@ window.AIEmailCompanion.ComposeAssistant = class {
   }
 
   setupAssistant(textarea, context = null) {
-    this.currentContext = context;
+    // Clear any previous context first
+    this.currentContext = null;
+    
+    // Only set context if it's explicitly a reply with valid data
+    const isValidReply = context && context.replyType === 'reply' && 
+                        context.originalSubject && context.originalSender &&
+                        context.originalSubject !== 'No subject' && context.originalSender !== 'Sender';
+    
+    if (isValidReply) {
+      this.currentContext = context;
+    }
+    
+    console.log('Setting up compose assistant:', isValidReply ? 'Reply mode' : 'New compose mode');
+    console.log('Context:', this.currentContext);
     
     // Auto-open sidebar when composing starts
     textarea.addEventListener('focus', () => {
@@ -123,10 +136,44 @@ window.AIEmailCompanion.ComposeAssistant = class {
   }
 
   handleComposeClose() {
+    // Clear all compose data when closing
+    this.currentContext = null;
+    this.currentText = '';
+    this.isProcessing = false;
+    
+    // Clear any timers
+    if (this.extractionTimer) {
+      clearTimeout(this.extractionTimer);
+      this.extractionTimer = null;
+    }
+    
+    if (this.typingTimer) {
+      clearTimeout(this.typingTimer);
+      this.typingTimer = null;
+    }
+    
+    // Reset the sidebar header back to normal
+    const headerTitle = document.querySelector('.sidebar-title');
+    if (headerTitle) {
+      headerTitle.innerHTML = 'Emma: Email Assistant <span class="sparkle">✨</span>';
+    }
+    
+    // Clear the sidebar content
     if (window.AIEmailCompanion.main) {
       window.AIEmailCompanion.main.isComposing = false;
       window.AIEmailCompanion.main.sidebar.close();
+      
+      // Reset sidebar to default state
+      const sidebar = window.AIEmailCompanion.main.sidebar;
+      if (sidebar) {
+        const content = sidebar.getContentElement();
+        if (content) {
+          content.innerHTML = '';
+        }
+      }
     }
+    
+    console.log('Compose closed and data cleared');
   }
 
   handleComposeInput(textarea) {
@@ -170,17 +217,12 @@ window.AIEmailCompanion.ComposeAssistant = class {
     }
     
     try {
-      console.log('Sending compose text to backend for suggestions...', text);
+      console.log('Getting compose suggestions from Groq API...');
       
-      const response = await this.api.callAPI('/api/email/compose', {
-        body: text,
-        context: this.currentContext
-      });
-
-      console.log('Received compose suggestions:', response);
-
-      if (response.success && response.data) {
-        this.showComposeSuggestions(response.data);
+      const suggestions = await this.groqAPI.generateComposeSuggestions(text, this.currentContext);
+      
+      if (suggestions && suggestions.length > 0) {
+        this.showComposeSuggestions(suggestions);
       }
     } catch (error) {
       console.error('Error getting compose suggestions:', error);
@@ -196,28 +238,16 @@ window.AIEmailCompanion.ComposeAssistant = class {
     const sidebar = window.AIEmailCompanion.main?.sidebar;
     if (!sidebar) return;
     
+    // Update header to show compose mode
+    const headerTitle = document.querySelector('.sidebar-title');
+    if (headerTitle) {
+      headerTitle.innerHTML = 'Emma - Compose Assistant <span class="sparkle">✨</span>';
+    }
+    
     const isReply = this.currentContext && this.currentContext.replyType === 'reply';
     
     const interfaceHtml = `
       <div class="compose-interface">
-        <div class="compose-header">
-          <h3 class="compose-title">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-            </svg>
-            AI Writing Assistant
-          </h3>
-          ${isReply ? `
-            <div class="reply-context-badge">
-              <svg class="icon" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M1.5 2.5A1.5 1.5 0 013 1h10a1.5 1.5 0 011.5 1.5v6.94L8.697 5.53a.75.75 0 00-1.394 0L1.5 9.44V2.5zm1.5 8.44v.56A1.5 1.5 0 004.5 13h7a1.5 1.5 0 001.5-1.5v-.56l-5-3.334-5 3.334z"/>
-              </svg>
-              <span>Reply Mode</span>
-            </div>
-          ` : ''}
-        </div>
-        
         <div class="compose-content">
           ${isReply && this.currentContext ? `
             <div class="reply-context-info">
@@ -272,6 +302,38 @@ window.AIEmailCompanion.ComposeAssistant = class {
               </svg>
               <span>Generate Email</span>
             </button>
+            
+            <!-- Generated Content Preview Section -->
+            <div id="generated-preview" class="generated-preview" style="display: none;">
+              <div class="preview-header">
+                <h5 class="preview-title">Generated Content</h5>
+                <div class="preview-actions">
+                  <button id="regenerate-btn" class="preview-btn regenerate-btn">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="23 4 23 10 17 10"></polyline>
+                      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                    Regenerate
+                  </button>
+                  <button id="use-generated-btn" class="preview-btn use-btn">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Use This Content
+                  </button>
+                </div>
+              </div>
+              <div class="preview-content">
+                <div class="preview-subject">
+                  <label>Subject:</label>
+                  <div id="preview-subject-text" class="preview-text"></div>
+                </div>
+                <div class="preview-body">
+                  <label>Body:</label>
+                  <div id="preview-body-text" class="preview-text"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -286,6 +348,13 @@ window.AIEmailCompanion.ComposeAssistant = class {
   setupPromptHandler() {
     const promptInput = document.getElementById('compose-prompt');
     const generateBtn = document.getElementById('generate-email-btn');
+    const previewSection = document.getElementById('generated-preview');
+    const previewSubject = document.getElementById('preview-subject-text');
+    const previewBody = document.getElementById('preview-body-text');
+    const useBtn = document.getElementById('use-generated-btn');
+    const regenerateBtn = document.getElementById('regenerate-btn');
+    
+    let currentGeneratedData = null;
     
     if (promptInput && generateBtn) {
       generateBtn.addEventListener('click', async () => {
@@ -304,23 +373,33 @@ window.AIEmailCompanion.ComposeAssistant = class {
         `;
         
         try {
-          console.log('Generating email from prompt:', prompt);
-
-          const response = await this.api.callAPI('/api/email/compose/prompt', {
-            body: prompt,
-            context: this.currentContext
-          });
-
-          console.log('Generated email response:', response);
+          const emailData = await this.groqAPI.generateEmailFromPrompt(prompt, this.currentContext);
           
-          if (response.success && response.data) {
-            this.insertGeneratedEmail(response.data);
-            promptInput.value = '';
-            this.components.showNotification('Email generated successfully!', 'success');
+          if (emailData) {
+            currentGeneratedData = emailData;
+            
+            // Check if preview mode is enabled
+            const settings = await this.getSettings();
+            const previewModeEnabled = settings.previewMode !== false; // Default to true if not set
+            
+            if (previewModeEnabled && previewSection) {
+              // Show in preview section
+              previewSubject.textContent = emailData.subject || 'No subject';
+              previewBody.innerHTML = (emailData.body || 'No content').replace(/\n/g, '<br>');
+              previewSection.style.display = 'block';
+              
+              this.components.showNotification('Content generated! Review and use it below.', 'success');
+            } else {
+              // Directly insert the content (old behavior)
+              this.insertGeneratedEmail(emailData);
+              promptInput.value = '';
+              currentGeneratedData = null;
+              this.components.showNotification('Email generated successfully!', 'success');
+            }
           }
         } catch (error) {
           console.error('Error generating email:', error);
-          this.components.showNotification('Failed to generate email', 'error');
+          this.components.showNotification('Failed to generate content', 'error');
         } finally {
           generateBtn.disabled = false;
           generateBtn.classList.remove('loading');
@@ -332,6 +411,26 @@ window.AIEmailCompanion.ComposeAssistant = class {
           `;
         }
       });
+      
+      // Use generated content handler
+      if (useBtn) {
+        useBtn.addEventListener('click', () => {
+          if (currentGeneratedData) {
+            this.insertGeneratedEmail(currentGeneratedData);
+            previewSection.style.display = 'none';
+            promptInput.value = '';
+            currentGeneratedData = null;
+            this.components.showNotification('Content inserted into email!', 'success');
+          }
+        });
+      }
+      
+      // Regenerate handler
+      if (regenerateBtn) {
+        regenerateBtn.addEventListener('click', () => {
+          generateBtn.click();
+        });
+      }
       
       // Allow Enter to submit (Ctrl/Cmd + Enter)
       promptInput.addEventListener('keydown', (e) => {
@@ -505,17 +604,43 @@ window.AIEmailCompanion.ComposeAssistant = class {
   }
 
   updateContext(context) {
-    this.currentContext = context;
+    // Only set context if it's valid reply data
+    if (context && context.replyType === 'reply' && 
+        context.originalSubject && context.originalSender &&
+        context.originalSubject !== 'No subject' && context.originalSender !== 'Sender') {
+      this.currentContext = context;
+    } else {
+      this.currentContext = null;
+    }
     
     // Update UI if showing
     const replyContextEl = document.querySelector('.reply-context-info');
-    if (replyContextEl && context && context.replyType === 'reply') {
-      replyContextEl.style.display = 'block';
-      const subjectEl = replyContextEl.querySelector('.context-subject');
-      const fromEl = replyContextEl.querySelector('.context-from');
-      
-      if (subjectEl) subjectEl.textContent = this.helpers.cleanText(context.originalSubject, 60);
-      if (fromEl) fromEl.textContent = `from ${context.originalSender}`;
+    if (replyContextEl) {
+      if (this.currentContext && this.currentContext.replyType === 'reply') {
+        replyContextEl.style.display = 'block';
+        const subjectEl = replyContextEl.querySelector('.context-subject');
+        const fromEl = replyContextEl.querySelector('.context-from');
+        
+        if (subjectEl) subjectEl.textContent = this.helpers.cleanText(this.currentContext.originalSubject, 60);
+        if (fromEl) fromEl.textContent = `from ${this.currentContext.originalSender}`;
+      } else {
+        replyContextEl.style.display = 'none';
+      }
     }
+  }
+
+  async getSettings() {
+    return new Promise((resolve) => {
+      chrome.storage.sync.get(null, (settings) => {
+        resolve({
+          autoSummarize: true,
+          smartReplies: true,
+          toneAssistance: true,
+          notifications: true,
+          previewMode: true,
+          ...settings
+        });
+      });
+    });
   }
 };
