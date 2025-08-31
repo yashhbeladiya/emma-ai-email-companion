@@ -206,6 +206,9 @@ window.AIEmailCompanion.Sidebar = class {
     setTimeout(() => {
       this.state = window.AIEmailCompanion.Constants.SIDEBAR_STATES.CLOSED;
       
+      // Dispatch sidebar closed event for reset functionality
+      document.dispatchEvent(new CustomEvent('sidebarClosed'));
+      
       // Show floating icon when sidebar closes
       if (window.AIEmailCompanion.main?.floatingIcon) {
         window.AIEmailCompanion.main.floatingIcon.show();
@@ -255,6 +258,50 @@ window.AIEmailCompanion.Sidebar = class {
   showError(retryCallback) {
     const errorState = this.components.createErrorState(retryCallback);
     this.updateContent(errorState);
+  }
+
+  updateFeatureVisibility(feature, isVisible) {
+    /**
+     * Update the visibility of specific features in the sidebar
+     * @param {string} feature - Feature name (keyPoints, replies, compose, analysis, meeting)
+     * @param {boolean} isVisible - Whether the feature should be visible
+     */
+    if (!this.sidebar) return;
+
+    const featureMap = {
+      'keyPoints': ['.summary-section', '.summarize-btn'],
+      'replies': ['.replies-section', '.quick-replies'],
+      'compose': ['.compose-section', '.compose-assistant'],
+      'analysis': ['.analysis-section', '.email-insights'],
+      'meeting': ['.meeting-section', '.meeting-details']
+    };
+
+    const selectors = featureMap[feature];
+    if (!selectors) return;
+
+    selectors.forEach(selector => {
+      const elements = this.sidebar.querySelectorAll(selector);
+      elements.forEach(element => {
+        if (isVisible) {
+          element.style.display = '';
+          element.classList.remove('feature-disabled');
+        } else {
+          element.style.display = 'none';
+          element.classList.add('feature-disabled');
+        }
+      });
+    });
+
+    // Update any feature-specific buttons or controls
+    const featureButtons = this.sidebar.querySelectorAll(`[data-feature="${feature}"]`);
+    featureButtons.forEach(button => {
+      button.disabled = !isVisible;
+      if (isVisible) {
+        button.classList.remove('disabled');
+      } else {
+        button.classList.add('disabled');
+      }
+    });
   }
 
   remove() {
