@@ -1,47 +1,33 @@
 /**
- * Extension Popup Interface
+ * Enhanced Extension Popup Interface
  * 
- * Manages the extension popup UI that appears when users click the Emma icon
- * in the Chrome toolbar. Provides access to settings, status information,
- * and extension controls.
+ * Manages the extension popup UI with tabbed interface providing comprehensive
+ * control over all extension features, settings, and status information.
  * 
  * Features:
- * - Extension settings management
- * - Current site detection and status
- * - Feature toggle controls
- * - Backend connection status
- * - Help and documentation links
- * - Version information
- * - Quick actions and shortcuts
- * 
- * Settings Management:
- * - Auto-summarize toggle
- * - Smart replies configuration
- * - Tone assistance preferences
- * - Notification settings
- * - Backend URL configuration
- * - Privacy preferences
- * 
- * Status Display:
- * - Current site compatibility
- * - Extension activation status
- * - API connection health
- * - Recent activity summary
+ * - Tabbed interface (Features, Settings, Status)
+ * - Feature toggle controls with real-time updates
+ * - Advanced settings management
+ * - API configuration and testing
+ * - Privacy controls
+ * - Extension status monitoring
+ * - Site compatibility checking
  * 
  * @class PopupManager
- * @version 2.0.0
+ * @version 2.1.0
  * @author Emma AI Team
  */
 
-// popup.js - Enhanced popup with connection to content script
 class PopupManager {
   constructor() {
     this.settings = {};
+    this.currentTab = 'features';
     this.init();
   }
 
   async init() {
     await this.loadSettings();
+    this.setupTabNavigation();
     this.setupEventListeners();
     this.updateUI();
     this.checkCurrentSite();
@@ -51,10 +37,13 @@ class PopupManager {
     return new Promise((resolve) => {
       chrome.storage.sync.get(null, (settings) => {
         this.settings = {
-          autoSummarize: true,
-          smartReplies: true,
-          toneAssistance: true,
-          notifications: true,
+          // Core Features
+          keyPoints: true,
+          quickReplies: true,
+          composeAssistant: true,
+          emailAnalysis: true,
+          meetingDetection: true,
+          
           ...settings
         };
         resolve();
@@ -62,9 +51,30 @@ class PopupManager {
     });
   }
 
+  setupTabNavigation() {
+    const tabs = document.querySelectorAll('.nav-tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+        
+        // Update active tab
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Update active content
+        tabContents.forEach(content => content.classList.remove('active'));
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+        
+        this.currentTab = tabName;
+      });
+    });
+  }
+
   setupEventListeners() {
-    // Toggle switches
-    const toggles = ['autoSummarize', 'smartReplies', 'toneAssistance', 'notifications'];
+    // Feature toggles (toggle switches)
+    const toggles = ['keyPoints', 'quickReplies', 'composeAssistant', 'emailAnalysis', 'meetingDetection'];
     toggles.forEach(toggle => {
       const element = document.getElementById(toggle);
       if (element) {
@@ -73,6 +83,11 @@ class PopupManager {
     });
 
     // Action buttons
+    this.setupActionButtons();
+  }
+
+  setupActionButtons() {
+    // Open Sidebar
     const openSidebarBtn = document.getElementById('openSidebar');
     if (openSidebarBtn) {
       openSidebarBtn.addEventListener('click', () => {
@@ -81,6 +96,7 @@ class PopupManager {
       });
     }
 
+    // Refresh Page
     const refreshBtn = document.getElementById('refreshPage');
     if (refreshBtn) {
       refreshBtn.addEventListener('click', () => {
@@ -90,6 +106,21 @@ class PopupManager {
             window.close();
           }
         });
+      });
+    }
+
+    // Reset Settings
+    const resetSettingsBtn = document.getElementById('resetSettings');
+    if (resetSettingsBtn) {
+      resetSettingsBtn.addEventListener('click', () => this.resetSettings());
+    }
+
+    // Save Settings
+    const saveSettingsBtn = document.getElementById('saveSettings');
+    if (saveSettingsBtn) {
+      saveSettingsBtn.addEventListener('click', () => {
+        this.saveSettings();
+        this.showNotification('Features saved successfully!');
       });
     }
   }
@@ -112,19 +143,28 @@ class PopupManager {
   }
 
   updateUI() {
-    // Update all toggles
-    Object.keys(this.settings).forEach(setting => {
-      const element = document.getElementById(setting);
-      if (element) {
-        this.updateToggle(setting);
-      }
+    // Update feature toggles
+    const toggles = ['keyPoints', 'quickReplies', 'composeAssistant', 'emailAnalysis', 'meetingDetection'];
+    toggles.forEach(setting => {
+      this.updateToggle(setting);
     });
 
-    // Update emails processed count
-    chrome.storage.local.get(['emailsProcessed'], (result) => {
+    // Update statistics
+    chrome.storage.local.get(['emailsProcessed', 'lastActivity'], (result) => {
       const emailsProcessedEl = document.getElementById('emailsProcessed');
       if (emailsProcessedEl) {
         emailsProcessedEl.textContent = result.emailsProcessed || 0;
+      }
+
+      const lastActivityEl = document.getElementById('lastActivity');
+      if (lastActivityEl) {
+        const lastActivity = result.lastActivity;
+        if (lastActivity) {
+          const date = new Date(lastActivity);
+          lastActivityEl.textContent = date.toLocaleTimeString();
+        } else {
+          lastActivityEl.textContent = 'Never';
+        }
       }
     });
   }
@@ -139,6 +179,23 @@ class PopupManager {
       action: 'updateSettings', 
       settings: this.settings 
     });
+  }
+
+  resetSettings() {
+    if (confirm('Are you sure you want to reset all features to default?')) {
+      const defaultSettings = {
+        keyPoints: true,
+        quickReplies: true,
+        composeAssistant: true,
+        emailAnalysis: true,
+        meetingDetection: true
+      };
+
+      this.settings = defaultSettings;
+      this.updateUI();
+      this.saveSettings();
+      this.showNotification('Features reset to default!');
+    }
   }
 
   async checkCurrentSite() {
@@ -184,24 +241,26 @@ class PopupManager {
     if (isSupported) {
       statusEl.textContent = 'Active';
       indicatorEl.className = 'status-indicator active';
-      openSidebarBtn.disabled = false;
-      openSidebarBtn.textContent = 'Open Assistant';
+      if (openSidebarBtn) {
+        openSidebarBtn.disabled = false;
+        openSidebarBtn.textContent = 'Open Assistant';
+      }
     } else {
       statusEl.textContent = 'Inactive';
       indicatorEl.className = 'status-indicator inactive';
-      openSidebarBtn.disabled = true;
-      openSidebarBtn.textContent = 'Not Available';
+      if (openSidebarBtn) {
+        openSidebarBtn.disabled = true;
+        openSidebarBtn.textContent = 'Not Available';
+      }
     }
   }
 
   async checkContentScriptStatus(tabId) {
     try {
-      // Try to ping the content script
       const response = await chrome.tabs.sendMessage(tabId, { action: 'ping' });
       console.log('Content script is loaded');
     } catch (error) {
       console.log('Content script not loaded, injecting...');
-      // Try to inject content script
       try {
         await chrome.scripting.executeScript({
           target: { tabId: tabId },
@@ -247,10 +306,8 @@ class PopupManager {
           })
           .catch((error) => {
             console.error('Failed to send message:', error);
-            // If it's a toggle sidebar action, try injecting script first
             if (message.action === 'toggleSidebar') {
               this.checkContentScriptStatus(tabs[0].id).then(() => {
-                // Retry sending message after injection
                 setTimeout(() => {
                   chrome.tabs.sendMessage(tabs[0].id, message).catch(() => {
                     console.error('Still failed after injection');
@@ -262,9 +319,50 @@ class PopupManager {
       }
     });
   }
+
+  showNotification(message, type = 'success') {
+    // Create a simple notification system
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 16px;
+      border-radius: 6px;
+      color: white;
+      font-size: 14px;
+      z-index: 10000;
+      animation: slideIn 0.3s ease;
+      background: ${type === 'error' ? '#ef4444' : '#10b981'};
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+  }
 }
 
 // Initialize popup when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   new PopupManager();
 });
+
+// Add notification keyframes
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+`;
+document.head.appendChild(style);

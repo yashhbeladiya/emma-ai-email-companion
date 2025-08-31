@@ -266,6 +266,248 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      border-bottom: 2px solid #f3f4f6;
+      margin-bottom: 20px;
+    }
+
+    .nav-tab {
+      flex: 1;
+      padding: 12px 16px;
+      background: none;
+      border: none;
+      font-size: 13px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+    }
+
+    .nav-tab:hover {
+      color: #374151;
+      background: #f9fafb;
+    }
+
+    .nav-tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+      background: #f8faff;
+    }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Settings Styles */
+    .settings-section {
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .settings-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #374151;
+      margin: 0 0 16px;
+    }
+
+    .setting-item {
+      margin-bottom: 16px;
+    }
+
+    .setting-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .setting-label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      margin-bottom: 4px;
+    }
+
+    .setting-label-text {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+
+    .setting-checkbox {
+      width: 16px;
+      height: 16px;
+      margin-right: 8px;
+      accent-color: #667eea;
+    }
+
+    .setting-text {
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .setting-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+      transition: border-color 0.2s;
+    }
+
+    .setting-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .setting-desc {
+      font-size: 12px;
+      color: #6b7280;
+      margin: 4px 0 0;
+    }
+
+    /* About Section */
+    .about-header {
+      text-align: center;
+      padding: 20px 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: -24px -20px 24px;
+      color: white;
+      border-radius: 16px 16px 0 0;
+    }
+
+    .about-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .about-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 4px;
+    }
+
+    .about-subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+      margin: 0;
+    }
+
+    .about-content {
+      padding: 0;
+    }
+
+    .about-section {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      padding: 16px;
+      background: #f8faff;
+      border-radius: 12px;
+      border-left: 4px solid #667eea;
+    }
+
+    .section-icon {
+      font-size: 24px;
+      margin-right: 12px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .section-content h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #374151;
+      margin: 0 0 6px;
+    }
+
+    .section-content p {
+      font-size: 13px;
+      color: #6b7280;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .support-section {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      border: 1px solid #bae6fd;
+    }
+
+    .support-title {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e40af;
+      margin: 0 0 16px;
+    }
+
+    .support-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .support-item {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #e0f2fe;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .support-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .support-icon {
+      font-size: 18px;
+      margin-right: 8px;
+    }
+
+    .support-text {
+      font-size: 12px;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .contact-section {
+      text-align: center;
+      padding: 16px;
+      background: #fffbeb;
+      border-radius: 8px;
+      border: 1px solid #fde68a;
+      margin-top: 16px;
+    }
+
+    .contact-text {
+      font-size: 13px;
+      color: #92400e;
+      margin: 0;
+      font-weight: 500;
+    }
   </style>
 </head>
 <body>
@@ -285,84 +527,181 @@
       <p>Loading settings...</p>
     </div>
 
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs" id="navTabs">
+      <button class="nav-tab active" data-tab="features">Features</button>
+      <button class="nav-tab" data-tab="about">About</button>
+      <button class="nav-tab" data-tab="status">Status</button>
+    </div>
+
     <div id="main-content">
-      <ul class="feature-list">
-        <li class="feature-item">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-            </svg>
-          </div>
-          <div class="feature-text">
-            <h3 class="feature-title">Auto Summarize</h3>
-            <p class="feature-desc">Automatically summarize emails when opened</p>
-          </div>
-          <div class="toggle-switch" id="autoSummarize"></div>
-        </li>
+      <!-- Features Tab -->
+      <div class="tab-content active" id="features-tab">
+        <ul class="feature-list">
+          <li class="feature-item">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div class="feature-text">
+              <h3 class="feature-title">Key Points</h3>
+              <p class="feature-desc">Extract and display key points from emails</p>
+            </div>
+            <div class="toggle-switch" id="keyPoints"></div>
+          </li>
 
-        <li class="feature-item">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/>
-            </svg>
-          </div>
-          <div class="feature-text">
-            <h3 class="feature-title">Smart Replies</h3>
-            <p class="feature-desc">Generate intelligent reply suggestions</p>
-          </div>
-          <div class="toggle-switch" id="smartReplies"></div>
-        </li>
+          <li class="feature-item">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/>
+              </svg>
+            </div>
+            <div class="feature-text">
+              <h3 class="feature-title">Quick Replies</h3>
+              <p class="feature-desc">Generate smart reply suggestions</p>
+            </div>
+            <div class="toggle-switch" id="quickReplies"></div>
+          </li>
 
-        <li class="feature-item">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M12 6.5c2.5 0 4.5 2 4.5 4.5s-2 4.5-4.5 4.5S7.5 13.5 7.5 11 9.5 6.5 12 6.5M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
-            </svg>
-          </div>
-          <div class="feature-text">
-            <h3 class="feature-title">Tone Assistant</h3>
-            <p class="feature-desc">Help adjust tone and style of your emails</p>
-          </div>
-          <div class="toggle-switch" id="toneAssistance"></div>
-        </li>
+          <li class="feature-item">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+              </svg>
+            </div>
+            <div class="feature-text">
+              <h3 class="feature-title">Compose Assistant</h3>
+              <p class="feature-desc">AI assistance while composing emails</p>
+            </div>
+            <div class="toggle-switch" id="composeAssistant"></div>
+          </li>
 
-        <li class="feature-item">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
-            </svg>
-          </div>
-          <div class="feature-text">
-            <h3 class="feature-title">Notifications</h3>
-            <p class="feature-desc">Get notified about important emails</p>
-          </div>
-          <div class="toggle-switch" id="notifications"></div>
-        </li>
-      </ul>
+          <li class="feature-item">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
+              </svg>
+            </div>
+            <div class="feature-text">
+              <h3 class="feature-title">Email Analysis</h3>
+              <p class="feature-desc">Analyze email intent and tone</p>
+            </div>
+            <div class="toggle-switch" id="emailAnalysis"></div>
+          </li>
 
-      <div class="status-section">
-        <div class="status-item">
-          <span class="status-label">Extension Status</span>
-          <div class="status-value">
-            <span id="extensionStatus">Active</span>
-            <div class="status-indicator active" id="statusIndicator"></div>
+          <li class="feature-item">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+              </svg>
+            </div>
+            <div class="feature-text">
+              <h3 class="feature-title">Meeting Detection</h3>
+              <p class="feature-desc">Detect and extract meeting information</p>
+            </div>
+            <div class="toggle-switch" id="meetingDetection"></div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- About Tab -->
+      <div class="tab-content" id="about-tab">
+        <div class="about-header">
+          <div class="about-icon">👋</div>
+          <h2 class="about-title">Meet Emma</h2>
+          <p class="about-subtitle">Your AI Email Companion</p>
+        </div>
+
+        <div class="about-content">
+          <div class="about-section">
+            <div class="section-icon">🎓</div>
+            <div class="section-content">
+              <h3>Made by a Student</h3>
+              <p>Hi! I'm a student passionate about building tools that make life easier. Emma is my way of helping you manage your emails more efficiently with AI.</p>
+            </div>
+          </div>
+
+          <div class="about-section">
+            <div class="section-icon">🔒</div>
+            <div class="section-content">
+              <h3>Privacy First</h3>
+              <p>Your privacy matters. Emma processes emails locally and doesn't collect or share any personal data. What you write stays with you.</p>
+            </div>
+          </div>
+
+          <div class="about-section">
+            <div class="section-icon">💡</div>
+            <div class="section-content">
+              <h3>Help Me Improve</h3>
+              <p>Your feedback drives Emma's evolution. Share your thoughts and help shape the future of AI email assistance.</p>
+            </div>
+          </div>
+
+          <div class="support-section">
+            <h3 class="support-title">Show Your Support</h3>
+            <div class="support-grid">
+              <div class="support-item">
+                <div class="support-icon">⭐</div>
+                <div class="support-text">Rate on Chrome Store</div>
+              </div>
+              <div class="support-item">
+                <div class="support-icon">💬</div>
+                <div class="support-text">Share Feedback</div>
+              </div>
+              <div class="support-item">
+                <div class="support-icon">🤝</div>
+                <div class="support-text">Support Financially</div>
+              </div>
+              <div class="support-item">
+                <div class="support-icon">📢</div>
+                <div class="support-text">Tell Your Friends</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="contact-section">
+            <p class="contact-text">🚀 Building more amazing tools? Let's connect!</p>
           </div>
         </div>
 
-        <div class="status-item">
-          <span class="status-label">Current Site</span>
-          <span class="status-value" id="currentSite">Loading...</span>
-        </div>
-
-        <div class="status-item">
-          <span class="status-label">Emails Processed</span>
-          <span class="status-value" id="emailsProcessed">0</span>
+        <div class="action-buttons">
+          <button class="btn btn-secondary" id="resetSettings">Reset Features</button>
+          <button class="btn btn-primary" id="saveSettings">Save Changes</button>
         </div>
       </div>
 
-      <div class="action-buttons">
-        <button class="btn btn-secondary" id="openSidebar">Open Assistant</button>
-        <button class="btn btn-primary" id="refreshPage">Refresh</button>
+      <!-- Status Tab -->
+      <div class="tab-content" id="status-tab">
+        <div class="status-section">
+          <div class="status-item">
+            <span class="status-label">Extension Status</span>
+            <div class="status-value">
+              <span id="extensionStatus">Active</span>
+              <div class="status-indicator active" id="statusIndicator"></div>
+            </div>
+          </div>
+
+          <div class="status-item">
+            <span class="status-label">Current Site</span>
+            <span class="status-value" id="currentSite">Loading...</span>
+          </div>
+
+          <div class="status-item">
+            <span class="status-label">Emails Processed</span>
+            <span class="status-value" id="emailsProcessed">0</span>
+          </div>
+
+          <div class="status-item">
+            <span class="status-label">Last Activity</span>
+            <span class="status-value" id="lastActivity">Never</span>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-secondary" id="openSidebar">Open Assistant</button>
+          <button class="btn btn-primary" id="refreshPage">Refresh Page</button>
+        </div>
       </div>
     </div>
   </div>
