@@ -1,35 +1,30 @@
-// groq-api.js - Groq API Integration with LLaMA 3.3 70B
+// groq-api.js - Groq API Integration with Proper Email Formatting
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 
 window.AIEmailCompanion.GroqAPI = class {
   constructor() {
     this.apiKey = 'YOUR_API_KEY_HERE';
     this.apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
-    this.model = 'llama-3.3-70b-versatile'; // Best model for our use case
-    this.cache = new Map(); // Cache responses to avoid repeated API calls
+    this.model = 'llama-3.3-70b-versatile';
+    this.cache = new Map();
   }
 
   async analyzeEmail(emailData) {
     try {
-      // Check cache first
       const cacheKey = this.generateCacheKey(emailData);
       if (this.cache.has(cacheKey)) {
         console.log('Using cached response');
         return this.cache.get(cacheKey);
       }
 
-      // Check if it's a no-reply email first (simple check)
       if (this.isObviousNoReply(emailData)) {
         return this.getNoReplyResponse(emailData);
       }
 
       const prompt = this.createComprehensivePrompt(emailData);
       const response = await this.callGroqAPI(prompt);
-      
-      // Parse and validate the response
       const parsedResponse = this.parseAIResponse(response);
       
-      // Cache the response
       this.cache.set(cacheKey, parsedResponse);
       
       return parsedResponse;
@@ -60,21 +55,21 @@ You are an AI email assistant. Analyze the email above and return ONLY a valid J
   "estimatedResponseTime": "Immediate, Today, This Week, No Rush",
   "summary": {
     "brief": "One sentence summary under 100 characters",
-    "points": ["Key point 1", "Key point 2", "Key point 3"] // Maximum 3 points, each under 150 characters
+    "points": ["Key point 1", "Key point 2", "Key point 3"]
   },
   "quickReplies": [
     {
-      "text": "Complete reply text with proper formatting:\n\nDear [Name],\n\n[Response content with proper paragraphs]\n\nBest regards,\n[Your name]",
+      "text": "Dear [Name],\\n\\nThank you for your email. [Response content]\\n\\nBest regards,\\n[Your name]",
       "tone": "Professional",
       "intent": "Acknowledge"
     },
     {
-      "text": "Different complete reply with proper structure:\n\nHi [Name],\n\n[Response content with line breaks between paragraphs]\n\nThank you,\n[Your name]",
+      "text": "Hi [Name],\\n\\nThanks for reaching out! [Response content]\\n\\nCheers,\\n[Your name]",
       "tone": "Friendly", 
       "intent": "Accept"
     },
     {
-      "text": "Another properly formatted reply option:\n\nDear [Name],\n\n[Well-structured response]\n\nSincerely,\n[Your name]",
+      "text": "Dear [Name],\\n\\nI appreciate you contacting me. [Response content]\\n\\nSincerely,\\n[Your name]",
       "tone": "Formal",
       "intent": "RequestInfo"
     }
@@ -110,7 +105,7 @@ You are an AI email assistant. Analyze the email above and return ONLY a valid J
     "action": "What to do next",
     "timing": "When to do it"
   },
-  "keywords": ["keyword1", "keyword2", "keyword3"], // Important keywords from the email
+  "keywords": ["keyword1", "keyword2", "keyword3"],
   "entities": {
     "people": ["Name1", "Name2"],
     "organizations": ["Org1", "Org2"],
@@ -119,16 +114,7 @@ You are an AI email assistant. Analyze the email above and return ONLY a valid J
   }
 }
 
-IMPORTANT RULES:
-1. Quick replies should be complete, ready-to-send responses, not templates
-2. Each quick reply should be 2-4 sentences and directly address the email content
-3. Make quick replies natural and contextual, mentioning specific details from the email
-4. If it's a personal/friendly email, make replies warm and conversational
-5. If it's professional, keep replies crisp but cordial
-6. Action items should only include things the recipient needs to do
-7. Return ONLY valid JSON, no additional text or markdown
-8. Adapt the formality of quick replies to match the sender's tone
-9. If meeting is mentioned, extract ALL possible details about it`;
+IMPORTANT: For quickReplies, use \\n for line breaks to create proper paragraph spacing.`;
 
     return prompt;
   }
@@ -139,14 +125,14 @@ IMPORTANT RULES:
       messages: [
         {
           role: "system",
-          content: "You are an expert email analysis assistant. You always respond with valid JSON only, no markdown formatting, no code blocks, just pure JSON."
+          content: "You are an expert email analysis assistant. You always respond with valid JSON only, no markdown formatting, no code blocks, just pure JSON. When creating email text, use \\n for line breaks."
         },
         {
           role: "user",
           content: prompt
         }
       ],
-      temperature: 0.3, // Lower temperature for more consistent, focused responses
+      temperature: 0.3,
       max_tokens: 2000,
       top_p: 0.9,
       stream: false
@@ -171,16 +157,12 @@ IMPORTANT RULES:
 
   parseAIResponse(responseText) {
     try {
-      // Clean the response - remove any markdown formatting if present
       let cleanedResponse = responseText
         .replace(/```json\n?/g, '')
         .replace(/```\n?/g, '')
         .trim();
       
-      // Parse JSON
       const parsed = JSON.parse(cleanedResponse);
-      
-      // Validate and ensure all required fields exist
       return this.validateAndNormalizeResponse(parsed);
     } catch (error) {
       console.error('Error parsing AI response:', error, responseText);
@@ -189,7 +171,6 @@ IMPORTANT RULES:
   }
 
   validateAndNormalizeResponse(response) {
-    // Ensure all required fields exist with defaults
     const normalized = {
       intent: response.intent || 'General',
       tone: response.tone || 'Professional',
@@ -212,7 +193,7 @@ IMPORTANT RULES:
       entities: response.entities || {}
     };
 
-    // Ensure quick replies have required fields and proper formatting
+    // Format quick replies properly
     normalized.quickReplies = normalized.quickReplies.map(reply => ({
       text: this.formatEmailBody(reply.text || 'Thank you for your email.'),
       tone: reply.tone || 'Professional',
@@ -226,7 +207,13 @@ IMPORTANT RULES:
     try {
       const prompt = this.createComposePrompt(emailText, context);
       const response = await this.callGroqAPI(prompt);
-      return this.parseComposeResponse(response);
+      const suggestions = this.parseComposeResponse(response);
+      
+      // Ensure all suggestions are properly formatted
+      return suggestions.map(s => ({
+        ...s,
+        body: this.formatEmailBody(s.body)
+      }));
     } catch (error) {
       console.error('Error generating compose suggestions:', error);
       return this.getFallbackComposeSuggestions();
@@ -250,16 +237,16 @@ Return ONLY a valid JSON array with exactly 2 suggestions:
   {
     "tone": "Professional",
     "subject": "Appropriate subject line",
-    "body": "Complete polished email with proper greeting, body, and signature"
+    "body": "Dear [Name],\\n\\nFirst paragraph of the email body.\\n\\nSecond paragraph if needed.\\n\\nBest regards,\\n[Your name]"
   },
   {
     "tone": "Friendly",
     "subject": "Appropriate subject line", 
-    "body": "Complete polished email with warmer tone"
+    "body": "Hi [Name],\\n\\nFirst paragraph with warmer tone.\\n\\nSecond paragraph if needed.\\n\\nThanks,\\n[Your name]"
   }
 ]
 
-Make each version complete and ready to send. Include appropriate greetings and closings.`;
+IMPORTANT: Use \\n\\n between paragraphs and \\n for single line breaks. Structure emails properly with greeting, body paragraphs, and closing.`;
   }
 
   parseComposeResponse(responseText) {
@@ -289,20 +276,19 @@ Return ONLY a valid JSON object:
   "body": "Complete email body with proper formatting"
 }
 
-CRITICAL FORMATTING REQUIREMENTS:
-1. Start with appropriate greeting (Dear [Name], / Hi [Name], / Hello,)
-2. Add TWO line breaks after greeting
-3. Write content in well-structured paragraphs
-4. Add DOUBLE line breaks between paragraphs (\\n\\n)
-5. Keep paragraphs concise (2-4 sentences max)
-6. Add TWO line breaks before closing
-7. End with professional closing (Best regards, / Sincerely, / Thank you,)
-8. Add line break after closing for signature
+IMPORTANT EMAIL FORMATTING RULES:
+1. Start with greeting: "Dear [Name]," or "Hi [Name],"
+2. Add TWO line breaks (\\n\\n) after greeting
+3. Write first paragraph
+4. Add TWO line breaks (\\n\\n) between paragraphs
+5. Keep paragraphs concise (2-4 sentences)
+6. Add TWO line breaks (\\n\\n) before closing
+7. End with closing: "Best regards," or "Sincerely,"
+8. Add ONE line break (\\n) after closing
+9. End with "[Your name]"
 
-EXAMPLE STRUCTURE:
-"Dear John,\\n\\nThank you for reaching out about the project timeline.\\n\\nI've reviewed the requirements and believe we can meet the deadline with the current resources. However, I'd like to schedule a brief meeting to discuss the specific deliverables and ensure we're aligned on expectations.\\n\\nWould you be available for a 30-minute call this week? I'm flexible with timing and can work around your schedule.\\n\\nBest regards,\\n[Your name]"
-
-Make the email natural, professional, and ready to send with proper spacing and structure.`;
+EXAMPLE FORMAT:
+"Dear John,\\n\\nThank you for reaching out about the project timeline.\\n\\nI've reviewed the requirements and believe we can meet the deadline. I'd like to schedule a meeting to discuss the deliverables.\\n\\nWould you be available for a call this week?\\n\\nBest regards,\\n[Your name]"`;
 
       const response = await this.callGroqAPI(fullPrompt);
       const parsed = JSON.parse(response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim());
@@ -323,49 +309,69 @@ Make the email natural, professional, and ready to send with proper spacing and 
   }
 
   formatEmailBody(body) {
-    // Ensure proper formatting for email body
+    if (!body) return '';
+    
+    // First, ensure we have proper line breaks
     let formatted = body;
     
-    // Fix greeting formatting - ensure double line break after greeting
-    formatted = formatted.replace(/(Dear|Hi|Hello)\s+([^,\n]+),?\s*(?!\n\n)/gi, '$1 $2,\n\n');
+    // Fix common formatting issues
+    // 1. Ensure greeting has double line break after it
+    formatted = formatted.replace(/(Dear|Hi|Hello|Hey)\s+([^,\n]+),?\s*/gi, (match, greeting, name) => {
+      return `${greeting} ${name},\n\n`;
+    });
     
-    // Ensure paragraphs are separated by double line breaks
-    // Split on single line breaks and rejoin with double where appropriate
+    // 2. Ensure closing has double line break before it
+    formatted = formatted.replace(/\n*(Best regards|Sincerely|Thank you|Thanks|Regards|Cheers|Best),?\s*/gi, (match, closing) => {
+      return `\n\n${closing},\n`;
+    });
+    
+    // 3. Ensure signature is on new line
+    formatted = formatted.replace(/,\s*\[/g, ',\n[');
+    
+    // 4. Fix paragraph breaks - ensure double line breaks between substantial text blocks
     const lines = formatted.split('\n');
-    const newLines = [];
+    const formattedLines = [];
+    let lastWasEmpty = false;
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
+      
       if (line) {
-        newLines.push(line);
-        // Add double break after sentences that end paragraphs
-        if (line.match(/[.!?]$/) && i < lines.length - 1 && lines[i + 1].trim()) {
-          // Check if next line starts a new thought
-          const nextLine = lines[i + 1].trim();
-          if (nextLine && !nextLine.match(/^(And|But|However|Also|Additionally|Furthermore|Moreover)/i)) {
-            newLines.push(''); // Add empty line for paragraph break
-          }
+        // Check if this line ends a paragraph (ends with period, exclamation, or question mark)
+        const endsWithPunctuation = /[.!?]$/.test(line);
+        const nextLine = lines[i + 1]?.trim();
+        const nextLineStartsNewThought = nextLine && 
+          !/^(and|but|however|also|additionally|furthermore|moreover)/i.test(nextLine);
+        
+        formattedLines.push(line);
+        
+        // Add paragraph break if this line ends with punctuation and next line starts new thought
+        if (endsWithPunctuation && nextLineStartsNewThought && !lastWasEmpty) {
+          formattedLines.push(''); // Add empty line for paragraph break
+          lastWasEmpty = true;
+        } else {
+          lastWasEmpty = false;
         }
-      } else if (newLines.length > 0 && newLines[newLines.length - 1] !== '') {
-        newLines.push(''); // Preserve intentional empty lines
+      } else {
+        // Preserve intentional empty lines but avoid multiple consecutive ones
+        if (!lastWasEmpty) {
+          formattedLines.push('');
+          lastWasEmpty = true;
+        }
       }
     }
     
-    formatted = newLines.join('\n');
+    formatted = formattedLines.join('\n');
     
-    // Fix signature formatting - ensure double line break before closing
-    formatted = formatted.replace(/(Best regards|Sincerely|Thank you|Thanks),?\s*(?!\n)/gi, '\n\n$1,\n');
-    
-    // Clean up excessive line breaks (max 2 consecutive)
+    // 5. Clean up excessive line breaks (more than 2 consecutive)
     formatted = formatted.replace(/\n{3,}/g, '\n\n');
     
-    // Trim and ensure it doesn't start/end with line breaks
+    // 6. Ensure it doesn't start or end with line breaks
     formatted = formatted.trim();
     
     return formatted;
   }
 
-  // Helper methods
   generateCacheKey(emailData) {
     return `${emailData.sender}_${emailData.subject}_${emailData.body?.substring(0, 100)}`;
   }
@@ -409,7 +415,6 @@ Make the email natural, professional, and ready to send with proper spacing and 
   }
 
   getFallbackResponse(emailData) {
-    // Enhanced fallback that still provides useful analysis
     return {
       intent: this.detectIntent(emailData),
       tone: this.detectTone(emailData),
@@ -458,7 +463,7 @@ Make the email natural, professional, and ready to send with proper spacing and 
     
     if (isQuestion) {
       replies.push({
-        text: `Thank you for your question. I'll review this carefully and get back to you with a detailed response shortly.`,
+        text: this.formatEmailBody(`Dear [Name],\n\nThank you for your question. I'll review this carefully and get back to you with a detailed response shortly.\n\nBest regards,\n[Your name]`),
         tone: 'Professional',
         intent: 'Acknowledge'
       });
@@ -466,15 +471,14 @@ Make the email natural, professional, and ready to send with proper spacing and 
     
     if (isMeeting) {
       replies.push({
-        text: `Thank you for reaching out about scheduling a meeting. I'll check my calendar and send you my availability soon.`,
+        text: this.formatEmailBody(`Dear [Name],\n\nThank you for reaching out about scheduling a meeting.\n\nI'll check my calendar and send you my availability soon.\n\nBest regards,\n[Your name]`),
         tone: 'Professional',
         intent: 'Accept'
       });
     }
     
-    // Always include a general acknowledgment
     replies.push({
-      text: `Thank you for your email. I've received your message and will respond as soon as possible.`,
+      text: this.formatEmailBody(`Dear [Name],\n\nThank you for your email. I've received your message and will respond as soon as possible.\n\nBest regards,\n[Your name]`),
       tone: 'Professional',
       intent: 'Acknowledge'
     });
@@ -487,17 +491,16 @@ Make the email natural, professional, and ready to send with proper spacing and 
       {
         tone: 'Professional',
         subject: 'Following up',
-        body: 'Dear [Recipient],\n\nI hope this email finds you well.\n\n[Your message here]\n\nBest regards,\n[Your name]'
+        body: this.formatEmailBody('Dear [Recipient],\n\nI hope this email finds you well.\n\n[Your message here]\n\nBest regards,\n[Your name]')
       },
       {
         tone: 'Friendly',
         subject: 'Quick note',
-        body: 'Hi [Name],\n\nHope you\'re doing great!\n\n[Your message here]\n\nThanks,\n[Your name]'
+        body: this.formatEmailBody('Hi [Name],\n\nHope you\'re doing great!\n\n[Your message here]\n\nThanks,\n[Your name]')
       }
     ];
   }
 
-  // Clear cache method (useful for memory management)
   clearCache() {
     this.cache.clear();
     console.log('Groq API cache cleared');
