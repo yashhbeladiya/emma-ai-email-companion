@@ -1,6 +1,272 @@
-// groq-api.js - Groq API Integration with Proper Email Formatting
+// groq-api.js - Groq API Integration with Embedded Calendar Functions
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 
+// First, add the CalendarIntegration class to the namespace
+window.AIEmailCompanion.CalendarIntegration = class {
+  constructor() {
+    this.helpers = window.AIEmailCompanion.Helpers;
+  }
+
+  async createEventFromEmail(emailData, meetingInfo) {
+    try {
+      const site = this.helpers.getCurrentSite();
+      
+      if (site.isGmail) {
+        this.openGoogleCalendar(emailData, meetingInfo);
+      } else if (site.isOutlook) {
+        this.openOutlookCalendar(emailData, meetingInfo);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error creating calendar event:', error);
+      throw error;
+    }
+  }
+
+  openGoogleCalendar(emailData, meetingInfo) {
+    const eventDetails = this.parseMeetingDetails(emailData, meetingInfo);
+    
+    const baseUrl = 'https://calendar.google.com/calendar/render';
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: eventDetails.title,
+      dates: this.formatGoogleCalendarDates(eventDetails.startDate, eventDetails.endDate),
+      details: eventDetails.description,
+      location: eventDetails.location || '',
+      sf: true,
+      output: 'xml'
+    });
+
+    if (emailData.senderEmail) {
+      params.append('add', emailData.senderEmail);
+    }
+
+    const calendarUrl = `${baseUrl}?${params.toString()}`;
+    window.open(calendarUrl, '_blank');
+    
+    console.log('Opening Google Calendar with meeting details');
+  }
+
+  openOutlookCalendar(emailData, meetingInfo) {
+    const eventDetails = this.parseMeetingDetails(emailData, meetingInfo);
+    
+    const baseUrl = 'https://outlook.live.com/calendar/0/deeplink/compose';
+    const params = new URLSearchParams({
+      subject: eventDetails.title,
+      body: eventDetails.description,
+      startdt: eventDetails.startDate.toISOString(),
+      enddt: eventDetails.endDate.toISOString(),
+      location: eventDetails.location || '',
+      allday: false
+    });
+
+    const calendarUrl = `${baseUrl}?${params.toString()}`;
+    window.open(calendarUrl, '_blank');
+    
+    console.log('Opening Outlook Calendar with meeting details');
+  }
+
+  parseMeetingDetails(emailData, meetingInfo) {
+    let title = meetingInfo.purpose || meetingInfo.description || emailData.subject;
+    title = title.replace(/^(Re:|RE:|Fwd:|FWD:|Fw:|FW:)\s*/gi, '').trim();
+    
+    const { startDate, endDate } = this.parseMeetingDates(meetingInfo, emailData);
+    const description = this.buildEventDescription(emailData, meetingInfo);
+    const location = this.extractLocation(meetingInfo, emailData);
+    
+    return {
+      title,
+      startDate,
+      endDate,
+      description,
+      location
+    };
+  }
+
+  parseMeetingDates(meetingInfo, emailData) {
+    let startDate, endDate;
+    
+    if (meetingInfo.startDate) {
+      startDate = new Date(meetingInfo.startDate);
+    } else if (meetingInfo.suggestedTimes && meetingInfo.suggestedTimes.length > 0) {
+      startDate = this.parseTimeString(meetingInfo.suggestedTimes[0]);
+    } else {
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() + 1);
+      startDate.setHours(14, 0, 0, 0);
+    }
+    
+    const duration = this.parseDuration(meetingInfo.duration);
+    endDate = new Date(startDate.getTime() + duration);
+    
+    return { startDate, endDate };
+  }
+
+  parseTimeString(timeStr) {
+    const now = new Date();
+    
+    const patterns = [
+      /(\w+day)\s+(?:at\s+)?(\d{1,2})\s*(am|pm)/i,
+      /(\w+)\s+(\d{1,2})(?:,?\s+at)?\s+(\d{1,2})\s*(am|pm)/i,
+      /(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{2})\s*(am|pm)?/i,
+      /(tomorrow|today)\s+(?:at\s+)?(\d{1,2})\s*(am|pm)/i
+    ];
+    
+    for (const pattern of patterns) {
+      const match = timeStr.match(pattern);
+      if (match) {
+        return this.parseMatchedTime(match, now);
+      }
+    }
+    
+    const parsed = new Date(timeStr);
+    if (!isNaN(parsed.getTime())) {
+      return parsed;
+    }
+    
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(14, 0, 0, 0);
+    return tomorrow;
+  }
+
+  parseMatchedTime(match, baseDate) {
+    const date = new Date(baseDate);
+    
+    if (match[1] && /day$/i.test(match[1])) {
+      const dayName = match[1].toLowerCase();
+      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const targetDay = days.indexOf(dayName);
+      
+      if (targetDay !== -1) {
+        const currentDay = date.getDay();
+        let daysToAdd = targetDay - currentDay;
+        if (daysToAdd <= 0) daysToAdd += 7;
+        date.setDate(date.getDate() + daysToAdd);
+      }
+    }
+    
+    if (match[1] && /tomorrow/i.test(match[1])) {
+      date.setDate(date.getDate() + 1);
+    }
+    
+    let hour = parseInt(match[2] || match[3]);
+    const isPM = /pm/i.test(match[match.length - 1]);
+    
+    if (isPM && hour < 12) hour += 12;
+    if (!isPM && hour === 12) hour = 0;
+    
+    date.setHours(hour, 0, 0, 0);
+    
+    return date;
+  }
+
+  parseDuration(durationStr) {
+    if (!durationStr) return 60 * 60 * 1000;
+    
+    const patterns = [
+      { regex: /(\d+)\s*hour/i, multiplier: 60 * 60 * 1000 },
+      { regex: /(\d+)\s*hr/i, multiplier: 60 * 60 * 1000 },
+      { regex: /(\d+)\s*minute/i, multiplier: 60 * 1000 },
+      { regex: /(\d+)\s*min/i, multiplier: 60 * 1000 }
+    ];
+    
+    for (const { regex, multiplier } of patterns) {
+      const match = durationStr.match(regex);
+      if (match) {
+        return parseInt(match[1]) * multiplier;
+      }
+    }
+    
+    return 60 * 60 * 1000;
+  }
+
+  buildEventDescription(emailData, meetingInfo) {
+    let description = '';
+    
+    if (meetingInfo.purpose) {
+      description += `Meeting Purpose: ${meetingInfo.purpose}\n\n`;
+    }
+    
+    description += `Organized by: ${emailData.sender}\n`;
+    if (emailData.senderEmail) {
+      description += `Email: ${emailData.senderEmail}\n`;
+    }
+    
+    description += `\nOriginal Email: ${emailData.subject}\n`;
+    
+    if (meetingInfo.type && meetingInfo.type !== 'Undefined') {
+      description += `\nMeeting Type: ${meetingInfo.type}\n`;
+    }
+    
+    if (emailData.body) {
+      const agendaMatch = emailData.body.match(/agenda|topics?|discuss|cover/i);
+      if (agendaMatch) {
+        description += '\n---\nFrom original email:\n';
+        const startIndex = emailData.body.toLowerCase().indexOf(agendaMatch[0]);
+        const excerpt = emailData.body.substring(startIndex, startIndex + 500);
+        description += excerpt;
+      }
+    }
+    
+    return description;
+  }
+
+  extractLocation(meetingInfo, emailData) {
+    if (meetingInfo.location) {
+      return meetingInfo.location;
+    }
+    
+    if (meetingInfo.type) {
+      if (/video|zoom|teams|meet|skype/i.test(meetingInfo.type)) {
+        return 'Virtual Meeting (Link TBD)';
+      }
+      if (/phone|call/i.test(meetingInfo.type)) {
+        return 'Phone Call';
+      }
+    }
+    
+    if (emailData.body) {
+      const patterns = [
+        /location:\s*([^\n]+)/i,
+        /where:\s*([^\n]+)/i,
+        /at\s+([\w\s]+(?:room|office|building|conference)[\w\s]*)/i,
+        /(room\s+[\w\d]+)/i
+      ];
+      
+      for (const pattern of patterns) {
+        const match = emailData.body.match(pattern);
+        if (match) {
+          return match[1].trim();
+        }
+      }
+      
+      if (/zoom\.us|teams\.microsoft|meet\.google/i.test(emailData.body)) {
+        return 'Virtual Meeting (See email for link)';
+      }
+    }
+    
+    return '';
+  }
+
+  formatGoogleCalendarDates(startDate, endDate) {
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      
+      return `${year}${month}${day}T${hours}${minutes}${seconds}`;
+    };
+    
+    return `${formatDate(startDate)}/${formatDate(endDate)}`;
+  }
+};
+
+// Now add the GroqAPI class
 window.AIEmailCompanion.GroqAPI = class {
   constructor() {
     this.apiKey = 'YOUR_API_KEY_HERE';
@@ -193,7 +459,6 @@ IMPORTANT: For quickReplies, use \\n for line breaks to create proper paragraph 
       entities: response.entities || {}
     };
 
-    // Format quick replies properly
     normalized.quickReplies = normalized.quickReplies.map(reply => ({
       text: this.formatEmailBody(reply.text || 'Thank you for your email.'),
       tone: reply.tone || 'Professional',
@@ -209,7 +474,6 @@ IMPORTANT: For quickReplies, use \\n for line breaks to create proper paragraph 
       const response = await this.callGroqAPI(prompt);
       const suggestions = this.parseComposeResponse(response);
       
-      // Ensure all suggestions are properly formatted
       return suggestions.map(s => ({
         ...s,
         body: this.formatEmailBody(s.body)
@@ -293,7 +557,6 @@ EXAMPLE FORMAT:
       const response = await this.callGroqAPI(fullPrompt);
       const parsed = JSON.parse(response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim());
       
-      // Ensure proper formatting
       if (parsed.body) {
         parsed.body = this.formatEmailBody(parsed.body);
       }
@@ -311,24 +574,18 @@ EXAMPLE FORMAT:
   formatEmailBody(body) {
     if (!body) return '';
     
-    // First, ensure we have proper line breaks
     let formatted = body;
     
-    // Fix common formatting issues
-    // 1. Ensure greeting has double line break after it
     formatted = formatted.replace(/(Dear|Hi|Hello|Hey)\s+([^,\n]+),?\s*/gi, (match, greeting, name) => {
       return `${greeting} ${name},\n\n`;
     });
     
-    // 2. Ensure closing has double line break before it
     formatted = formatted.replace(/\n*(Best regards|Sincerely|Thank you|Thanks|Regards|Cheers|Best),?\s*/gi, (match, closing) => {
       return `\n\n${closing},\n`;
     });
     
-    // 3. Ensure signature is on new line
     formatted = formatted.replace(/,\s*\[/g, ',\n[');
     
-    // 4. Fix paragraph breaks - ensure double line breaks between substantial text blocks
     const lines = formatted.split('\n');
     const formattedLines = [];
     let lastWasEmpty = false;
@@ -337,7 +594,6 @@ EXAMPLE FORMAT:
       const line = lines[i].trim();
       
       if (line) {
-        // Check if this line ends a paragraph (ends with period, exclamation, or question mark)
         const endsWithPunctuation = /[.!?]$/.test(line);
         const nextLine = lines[i + 1]?.trim();
         const nextLineStartsNewThought = nextLine && 
@@ -345,15 +601,13 @@ EXAMPLE FORMAT:
         
         formattedLines.push(line);
         
-        // Add paragraph break if this line ends with punctuation and next line starts new thought
         if (endsWithPunctuation && nextLineStartsNewThought && !lastWasEmpty) {
-          formattedLines.push(''); // Add empty line for paragraph break
+          formattedLines.push('');
           lastWasEmpty = true;
         } else {
           lastWasEmpty = false;
         }
       } else {
-        // Preserve intentional empty lines but avoid multiple consecutive ones
         if (!lastWasEmpty) {
           formattedLines.push('');
           lastWasEmpty = true;
@@ -362,11 +616,7 @@ EXAMPLE FORMAT:
     }
     
     formatted = formattedLines.join('\n');
-    
-    // 5. Clean up excessive line breaks (more than 2 consecutive)
     formatted = formatted.replace(/\n{3,}/g, '\n\n');
-    
-    // 6. Ensure it doesn't start or end with line breaks
     formatted = formatted.trim();
     
     return formatted;
@@ -506,3 +756,6 @@ EXAMPLE FORMAT:
     console.log('Groq API cache cleared');
   }
 };
+
+// Log successful loading
+console.log('GroqAPI and CalendarIntegration classes loaded successfully');

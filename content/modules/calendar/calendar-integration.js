@@ -1,232 +1,338 @@
-// calendar-integration.js - Integration with Google Calendar and Outlook Calendar
+// calendar-integration.js - Google Calendar Integration
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 
 window.AIEmailCompanion.CalendarIntegration = class {
   constructor() {
-    this.site = window.AIEmailCompanion.Helpers.getCurrentSite();
+    this.helpers = window.AIEmailCompanion.Helpers;
   }
 
-  async addToCalendar(meetingData, emailData) {
-    if (this.site.isGmail) {
-      return this.addToGoogleCalendar(meetingData, emailData);
-    } else if (this.site.isOutlook) {
-      return this.addToOutlookCalendar(meetingData, emailData);
-    } else {
-      // Fallback to Google Calendar web interface
-      return this.openGoogleCalendarWeb(meetingData, emailData);
-    }
-  }
-
-  addToGoogleCalendar(meetingData, emailData) {
+  /**
+   * Create calendar event from email data
+   * Opens Google Calendar or Outlook Calendar with pre-filled information
+   */
+  async createEventFromEmail(emailData, meetingInfo) {
     try {
-      // Format dates for Google Calendar
-      const startDate = this.formatDateForGoogle(meetingData.startDate || new Date());
-      const endDate = this.formatDateForGoogle(meetingData.endDate || new Date(Date.now() + 60*60*1000));
+      const site = this.helpers.getCurrentSite();
       
-      // Build Google Calendar URL
-      const baseUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE';
-      const params = new URLSearchParams({
-        text: meetingData.title || meetingData.purpose || `Meeting: ${emailData.subject}`,
-        dates: `${startDate}/${endDate}`,
-        details: this.buildMeetingDetails(meetingData, emailData),
-        location: meetingData.location || '',
-        sf: true,
-        output: 'xml'
-      });
-      
-      // Open in new tab
-      const calendarUrl = `${baseUrl}&${params.toString()}`;
-      window.open(calendarUrl, '_blank');
-      
-      return { success: true, method: 'google_calendar' };
-    } catch (error) {
-      console.error('Error adding to Google Calendar:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  addToOutlookCalendar(meetingData, emailData) {
-    try {
-      // Check if we're in Outlook web app
-      if (window.location.hostname.includes('outlook')) {
-        // Try to use Outlook's native calendar functionality
-        this.openOutlookCalendarPane(meetingData, emailData);
-        return { success: true, method: 'outlook_native' };
-      } else {
-        // Open Outlook Calendar web interface
-        return this.openOutlookCalendarWeb(meetingData, emailData);
+      if (site.isGmail) {
+        this.openGoogleCalendar(emailData, meetingInfo);
+      } else if (site.isOutlook) {
+        this.openOutlookCalendar(emailData, meetingInfo);
       }
+      
+      return { success: true };
     } catch (error) {
-      console.error('Error adding to Outlook Calendar:', error);
-      return { success: false, error: error.message };
+      console.error('Error creating calendar event:', error);
+      throw error;
     }
   }
 
-  openOutlookCalendarPane(meetingData, emailData) {
-    // Try to find and click the calendar button in Outlook
-    const calendarButton = document.querySelector('[aria-label*="Calendar"]') ||
-                          document.querySelector('[data-icon-name="Calendar"]') ||
-                          document.querySelector('.ms-Button--command[title*="Calendar"]');
+  /**
+   * Open Google Calendar with pre-filled event details
+   */
+  openGoogleCalendar(emailData, meetingInfo) {
+    // Parse meeting details
+    const eventDetails = this.parseMeetingDetails(emailData, meetingInfo);
     
-    if (calendarButton) {
-      calendarButton.click();
-      
-      // Wait for calendar to open, then try to create event
-      setTimeout(() => {
-        const newEventButton = document.querySelector('[aria-label*="New event"]') ||
-                               document.querySelector('[aria-label*="New appointment"]');
-        if (newEventButton) {
-          newEventButton.click();
-          // Auto-fill would happen here if we had access to the form
-          this.fillOutlookEventForm(meetingData, emailData);
-        }
-      }, 500);
-    } else {
-      // Fallback to web interface
-      this.openOutlookCalendarWeb(meetingData, emailData);
-    }
-  }
-
-  fillOutlookEventForm(meetingData, emailData) {
-    setTimeout(() => {
-      // Try to fill the form fields
-      const titleField = document.querySelector('input[aria-label*="title"]') ||
-                        document.querySelector('input[placeholder*="title"]');
-      const locationField = document.querySelector('input[aria-label*="location"]') ||
-                           document.querySelector('input[placeholder*="location"]');
-      
-      if (titleField) {
-        titleField.value = meetingData.title || `Meeting: ${emailData.subject}`;
-        titleField.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-      
-      if (locationField && meetingData.location) {
-        locationField.value = meetingData.location;
-        locationField.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-    }, 500);
-  }
-
-  openOutlookCalendarWeb(meetingData, emailData) {
-    // Build Outlook Calendar web URL
-    const baseUrl = 'https://outlook.live.com/calendar/0/deeplink/compose';
+    // Build Google Calendar URL
+    const baseUrl = 'https://calendar.google.com/calendar/render';
     const params = new URLSearchParams({
-      subject: meetingData.title || `Meeting: ${emailData.subject}`,
-      body: this.buildMeetingDetails(meetingData, emailData),
-      startdt: this.formatDateForOutlook(meetingData.startDate || new Date()),
-      enddt: this.formatDateForOutlook(meetingData.endDate || new Date(Date.now() + 60*60*1000)),
-      location: meetingData.location || '',
-      allday: false
+      action: 'TEMPLATE',
+      text: eventDetails.title,
+      dates: this.formatGoogleCalendarDates(eventDetails.startDate, eventDetails.endDate),
+      details: eventDetails.description,
+      location: eventDetails.location || '',
+      sf: true,
+      output: 'xml'
     });
-    
+
+    // Add guests if we have sender email
+    if (emailData.senderEmail) {
+      params.append('add', emailData.senderEmail);
+    }
+
+    // Open in new tab
     const calendarUrl = `${baseUrl}?${params.toString()}`;
     window.open(calendarUrl, '_blank');
     
-    return { success: true, method: 'outlook_web' };
+    console.log('Opening Google Calendar with meeting details');
   }
 
-  openGoogleCalendarWeb(meetingData, emailData) {
-    // Fallback for non-Gmail users
-    const startDate = this.formatDateForGoogle(meetingData.startDate || new Date());
-    const endDate = this.formatDateForGoogle(meetingData.endDate || new Date(Date.now() + 60*60*1000));
+  /**
+   * Open Outlook Calendar with pre-filled event details
+   */
+  openOutlookCalendar(emailData, meetingInfo) {
+    // Parse meeting details
+    const eventDetails = this.parseMeetingDetails(emailData, meetingInfo);
     
-    const baseUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE';
+    // For Outlook Web, we'll use the calendar deeplink
+    const baseUrl = 'https://outlook.live.com/calendar/0/deeplink/compose';
     const params = new URLSearchParams({
-      text: meetingData.title || `Meeting: ${emailData.subject}`,
-      dates: `${startDate}/${endDate}`,
-      details: this.buildMeetingDetails(meetingData, emailData),
-      location: meetingData.location || ''
+      subject: eventDetails.title,
+      body: eventDetails.description,
+      startdt: eventDetails.startDate.toISOString(),
+      enddt: eventDetails.endDate.toISOString(),
+      location: eventDetails.location || '',
+      allday: false
     });
-    
-    const calendarUrl = `${baseUrl}&${params.toString()}`;
+
+    // Open in new tab
+    const calendarUrl = `${baseUrl}?${params.toString()}`;
     window.open(calendarUrl, '_blank');
     
-    return { success: true, method: 'google_calendar_web' };
+    console.log('Opening Outlook Calendar with meeting details');
   }
 
-  buildMeetingDetails(meetingData, emailData) {
-    let details = '';
+  /**
+   * Parse meeting details from email and meeting info
+   */
+  parseMeetingDetails(emailData, meetingInfo) {
+    // Extract title
+    let title = meetingInfo.purpose || meetingInfo.description || emailData.subject;
+    title = title.replace(/^(Re:|RE:|Fwd:|FWD:|Fw:|FW:)\s*/gi, '').trim();
     
-    if (meetingData.purpose) {
-      details += `Purpose: ${meetingData.purpose}\n\n`;
-    }
+    // Parse dates
+    const { startDate, endDate } = this.parseMeetingDates(meetingInfo, emailData);
     
-    if (meetingData.description) {
-      details += `${meetingData.description}\n\n`;
-    }
+    // Build description
+    const description = this.buildEventDescription(emailData, meetingInfo);
     
-    if (meetingData.type) {
-      details += `Meeting Type: ${meetingData.type}\n`;
-    }
+    // Extract location
+    const location = this.extractLocation(meetingInfo, emailData);
     
-    if (meetingData.duration) {
-      details += `Duration: ${meetingData.duration}\n`;
-    }
-    
-    details += `\n---\nOriginal Email:\n`;
-    details += `From: ${emailData.sender}\n`;
-    details += `Subject: ${emailData.subject}\n`;
-    
-    if (meetingData.suggestedTimes && meetingData.suggestedTimes.length > 0) {
-      details += `\nSuggested Times:\n`;
-      meetingData.suggestedTimes.forEach(time => {
-        details += `- ${time}\n`;
-      });
-    }
-    
-    return details;
+    return {
+      title,
+      startDate,
+      endDate,
+      description,
+      location
+    };
   }
 
-  formatDateForGoogle(date) {
-    // Format: YYYYMMDDTHHmmssZ
-    const d = new Date(date);
-    return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  /**
+   * Parse meeting dates from various formats
+   */
+  parseMeetingDates(meetingInfo, emailData) {
+    let startDate, endDate;
+    
+    // Try to parse from meeting info
+    if (meetingInfo.startDate) {
+      startDate = new Date(meetingInfo.startDate);
+    } else if (meetingInfo.suggestedTimes && meetingInfo.suggestedTimes.length > 0) {
+      // Parse first suggested time
+      startDate = this.parseTimeString(meetingInfo.suggestedTimes[0]);
+    } else {
+      // Default to tomorrow at 2 PM
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() + 1);
+      startDate.setHours(14, 0, 0, 0);
+    }
+    
+    // Calculate end date based on duration
+    const duration = this.parseDuration(meetingInfo.duration);
+    endDate = new Date(startDate.getTime() + duration);
+    
+    return { startDate, endDate };
   }
 
-  formatDateForOutlook(date) {
-    // Format: YYYY-MM-DDTHH:mm:ss
-    const d = new Date(date);
-    return d.toISOString().slice(0, 19);
+  /**
+   * Parse time string to Date object
+   */
+  parseTimeString(timeStr) {
+    const now = new Date();
+    
+    // Common patterns
+    const patterns = [
+      // "Tuesday 2 PM", "Tuesday at 2 PM"
+      /(\w+day)\s+(?:at\s+)?(\d{1,2})\s*(am|pm)/i,
+      // "Jan 14 at 2 PM", "January 14, 2 PM"
+      /(\w+)\s+(\d{1,2})(?:,?\s+at)?\s+(\d{1,2})\s*(am|pm)/i,
+      // "1/14 2:00 PM", "14/1 14:00"
+      /(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{2})\s*(am|pm)?/i,
+      // "tomorrow at 3 PM"
+      /(tomorrow|today)\s+(?:at\s+)?(\d{1,2})\s*(am|pm)/i
+    ];
+    
+    for (const pattern of patterns) {
+      const match = timeStr.match(pattern);
+      if (match) {
+        return this.parseMatchedTime(match, now);
+      }
+    }
+    
+    // Fallback: try to parse as is
+    const parsed = new Date(timeStr);
+    if (!isNaN(parsed.getTime())) {
+      return parsed;
+    }
+    
+    // Default to tomorrow 2 PM
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(14, 0, 0, 0);
+    return tomorrow;
   }
 
-  // Generate .ics file for universal calendar support
-  generateICSFile(meetingData, emailData) {
-    const startDate = this.formatDateForICS(meetingData.startDate || new Date());
-    const endDate = this.formatDateForICS(meetingData.endDate || new Date(Date.now() + 60*60*1000));
-    const uid = `emma-${Date.now()}@aiemailcompanion.com`;
+  /**
+   * Parse matched time pattern
+   */
+  parseMatchedTime(match, baseDate) {
+    const date = new Date(baseDate);
     
-    const icsContent = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//Emma AI Email Companion//EN',
-      'BEGIN:VEVENT',
-      `UID:${uid}`,
-      `DTSTAMP:${this.formatDateForICS(new Date())}`,
-      `DTSTART:${startDate}`,
-      `DTEND:${endDate}`,
-      `SUMMARY:${meetingData.title || emailData.subject}`,
-      `DESCRIPTION:${this.buildMeetingDetails(meetingData, emailData).replace(/\n/g, '\\n')}`,
-      meetingData.location ? `LOCATION:${meetingData.location}` : '',
-      'STATUS:CONFIRMED',
-      'END:VEVENT',
-      'END:VCALENDAR'
-    ].filter(line => line).join('\r\n');
+    // Handle day of week
+    if (match[1] && /day$/i.test(match[1])) {
+      const dayName = match[1].toLowerCase();
+      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const targetDay = days.indexOf(dayName);
+      
+      if (targetDay !== -1) {
+        const currentDay = date.getDay();
+        let daysToAdd = targetDay - currentDay;
+        if (daysToAdd <= 0) daysToAdd += 7; // Next week if day has passed
+        date.setDate(date.getDate() + daysToAdd);
+      }
+    }
     
-    // Create and download .ics file
-    const blob = new Blob([icsContent], { type: 'text/calendar' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `meeting-${Date.now()}.ics`;
-    link.click();
-    URL.revokeObjectURL(url);
+    // Handle tomorrow/today
+    if (match[1] && /tomorrow/i.test(match[1])) {
+      date.setDate(date.getDate() + 1);
+    }
     
-    return { success: true, method: 'ics_file' };
+    // Handle time
+    let hour = parseInt(match[2] || match[3]);
+    const isPM = /pm/i.test(match[match.length - 1]);
+    
+    if (isPM && hour < 12) hour += 12;
+    if (!isPM && hour === 12) hour = 0;
+    
+    date.setHours(hour, 0, 0, 0);
+    
+    return date;
   }
 
-  formatDateForICS(date) {
-    // Format: YYYYMMDDTHHMMSSZ
-    const d = new Date(date);
-    return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  /**
+   * Parse duration string to milliseconds
+   */
+  parseDuration(durationStr) {
+    if (!durationStr) return 60 * 60 * 1000; // Default 1 hour
+    
+    const patterns = [
+      { regex: /(\d+)\s*hour/i, multiplier: 60 * 60 * 1000 },
+      { regex: /(\d+)\s*hr/i, multiplier: 60 * 60 * 1000 },
+      { regex: /(\d+)\s*minute/i, multiplier: 60 * 1000 },
+      { regex: /(\d+)\s*min/i, multiplier: 60 * 1000 }
+    ];
+    
+    for (const { regex, multiplier } of patterns) {
+      const match = durationStr.match(regex);
+      if (match) {
+        return parseInt(match[1]) * multiplier;
+      }
+    }
+    
+    return 60 * 60 * 1000; // Default 1 hour
+  }
+
+  /**
+   * Build event description from email content
+   */
+  buildEventDescription(emailData, meetingInfo) {
+    let description = '';
+    
+    // Add meeting purpose if available
+    if (meetingInfo.purpose) {
+      description += `Meeting Purpose: ${meetingInfo.purpose}\n\n`;
+    }
+    
+    // Add organizer info
+    description += `Organized by: ${emailData.sender}\n`;
+    if (emailData.senderEmail) {
+      description += `Email: ${emailData.senderEmail}\n`;
+    }
+    
+    // Add original email subject
+    description += `\nOriginal Email: ${emailData.subject}\n`;
+    
+    // Add meeting type if specified
+    if (meetingInfo.type && meetingInfo.type !== 'Undefined') {
+      description += `\nMeeting Type: ${meetingInfo.type}\n`;
+    }
+    
+    // Add any agenda items from email body
+    if (emailData.body) {
+      const agendaMatch = emailData.body.match(/agenda|topics?|discuss|cover/i);
+      if (agendaMatch) {
+        description += '\n---\nFrom original email:\n';
+        // Extract relevant portion (first 500 chars after agenda mention)
+        const startIndex = emailData.body.toLowerCase().indexOf(agendaMatch[0]);
+        const excerpt = emailData.body.substring(startIndex, startIndex + 500);
+        description += excerpt;
+      }
+    }
+    
+    return description;
+  }
+
+  /**
+   * Extract location from meeting info or email
+   */
+  extractLocation(meetingInfo, emailData) {
+    // Check meeting info first
+    if (meetingInfo.location) {
+      return meetingInfo.location;
+    }
+    
+    // Check meeting type for virtual meetings
+    if (meetingInfo.type) {
+      if (/video|zoom|teams|meet|skype/i.test(meetingInfo.type)) {
+        return 'Virtual Meeting (Link TBD)';
+      }
+      if (/phone|call/i.test(meetingInfo.type)) {
+        return 'Phone Call';
+      }
+    }
+    
+    // Try to extract from email body
+    if (emailData.body) {
+      // Look for location patterns
+      const patterns = [
+        /location:\s*([^\n]+)/i,
+        /where:\s*([^\n]+)/i,
+        /at\s+([\w\s]+(?:room|office|building|conference)[\w\s]*)/i,
+        /(room\s+[\w\d]+)/i
+      ];
+      
+      for (const pattern of patterns) {
+        const match = emailData.body.match(pattern);
+        if (match) {
+          return match[1].trim();
+        }
+      }
+      
+      // Check for virtual meeting links
+      if (/zoom\.us|teams\.microsoft|meet\.google/i.test(emailData.body)) {
+        return 'Virtual Meeting (See email for link)';
+      }
+    }
+    
+    return '';
+  }
+
+  /**
+   * Format dates for Google Calendar URL
+   */
+  formatGoogleCalendarDates(startDate, endDate) {
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      
+      return `${year}${month}${day}T${hours}${minutes}${seconds}`;
+    };
+    
+    return `${formatDate(startDate)}/${formatDate(endDate)}`;
   }
 };
