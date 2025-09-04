@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Emma - AI Email Companion",
   "version": "2.0.0",
-  "description": "Intelligent email assistant with backend AI integration, smart replies, tone analysis, and local calendar management",
+  "description": "Your intelligent email assistant. Emma helps you write better emails with AI-powered suggestions, smart replies, and tone analysis.",
   "permissions": [
     "activeTab",
     "storage",
@@ -15,8 +15,7 @@
     "https://mail.google.com/*",
     "https://outlook.live.com/*",
     "https://outlook.office.com/*",
-    "https://outlook.office365.com/*",
-    "https://your-backend-api.com/*"
+    "https://outlook.office365.com/*"
   ],
   "content_scripts": [
     {
@@ -29,6 +28,8 @@
       "js": [
         "content/modules/utils/constants.js",
         "content/modules/utils/helpers.js",
+        "content/modules/api/groq-api.js",
+        "content/modules/calendar/calendar-integration.js",
         "content/modules/calendar/local-calendar.js",
         "content/modules/api/backend-api.js",
         "content/modules/ui/components.js",
@@ -50,22 +51,23 @@
     }
   ],
   "background": {
-    "service_worker": "background.js",
-    "type": "module"
+    "service_worker": "background.js"
   },
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "AI Email Companion"
+    "default_title": "Emma - Your AI Email Companion",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "web_accessible_resources": [
-    {
-      "resources": ["compose-helper.html"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  "author": "Yashh Beladiya",
+  "homepage_url": "https://github.com/yashhbeladiya/emma-ai-email-companion",
+  "short_name": "Emma"
 }
