@@ -1,40 +1,3 @@
-/**
- * Compose Assistant Module
- * 
- * Provides intelligent writing assistance during email composition.
- * Offers real-time suggestions, tone analysis, and contextual improvements
- * to enhance email communication quality and effectiveness.
- * 
- * Features:
- * - Real-time composition analysis
- * - Tone and style suggestions
- * - Context-aware reply assistance
- * - Smart text completion
- * - Template generation
- * - Grammar and clarity improvements
- * - Professional formatting
- * - Multi-platform integration
- * 
- * Assistance Types:
- * - Reply Context Analysis
- * - Tone Matching
- * - Professional Templates
- * - Smart Suggestions
- * - Auto-completion
- * - Style Improvements
- * 
- * Integration:
- * - Gmail compose interface
- * - Outlook compose interface
- * - Real-time typing detection
- * - Background processing
- * 
- * @class ComposeAssistant
- * @version 2.0.0
- * @author Emma AI Team
- */
-
-// compose-assistant.js - Enterprise-grade compose assistance module
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 
 window.AIEmailCompanion.ComposeAssistant = class {
@@ -47,6 +10,7 @@ window.AIEmailCompanion.ComposeAssistant = class {
     this.currentText = '';
     this.extractionTimer = null;
     this.isProcessing = false;
+    this.isInteractingWithSidebar = false; // Track sidebar interaction
   }
 
   setupAssistant(textarea, context = null) {
@@ -80,10 +44,19 @@ window.AIEmailCompanion.ComposeAssistant = class {
       this.handleComposeInput(textarea);
     });
 
+    // Modified blur handler to check if we're interacting with sidebar
     textarea.addEventListener('blur', () => {
-      // Small delay to avoid closing immediately when clicking sidebar
+      // Check if the new focus is within the sidebar
       setTimeout(() => {
-        if (!document.activeElement.closest('.ai-companion-sidebar')) {
+        const activeElement = document.activeElement;
+        const isInSidebar = activeElement && (
+          activeElement.closest('.ai-companion-sidebar') ||
+          activeElement.id === 'compose-prompt' ||
+          activeElement.id === 'generate-email-btn' ||
+          activeElement.closest('.compose-interface')
+        );
+        
+        if (!isInSidebar && !this.isInteractingWithSidebar) {
           if (window.AIEmailCompanion.main) {
             window.AIEmailCompanion.main.isComposing = false;
           }
@@ -140,6 +113,7 @@ window.AIEmailCompanion.ComposeAssistant = class {
     this.currentContext = null;
     this.currentText = '';
     this.isProcessing = false;
+    this.isInteractingWithSidebar = false;
     
     // Clear any timers
     if (this.extractionTimer) {
@@ -191,13 +165,13 @@ window.AIEmailCompanion.ComposeAssistant = class {
       clearTimeout(this.extractionTimer);
     }
 
-    // Set new timer - extract after 10 seconds of no typing
+    // Set new timer - extract after 6 seconds of no typing
     this.extractionTimer = setTimeout(() => {
       if (text.length > 20 && !this.isProcessing) {
-        console.log('Extracting compose content after 10 seconds...');
+        console.log('Extracting compose content after 6 seconds...');
         this.extractAndSuggest(text);
       }
-    }, 10000); // 10 seconds
+    }, 6000); // 6 seconds
   }
 
   async extractAndSuggest(text) {
@@ -268,7 +242,7 @@ window.AIEmailCompanion.ComposeAssistant = class {
               </div>
               <div class="status-content">
                 <p class="status-title">AI is monitoring your writing</p>
-                <p class="status-subtitle">Write naturally - suggestions will appear after 10 seconds of pause</p>
+                <p class="status-subtitle">Write naturally - suggestions will appear after 6 seconds of pause</p>
               </div>
             </div>
           </div>
@@ -341,7 +315,7 @@ window.AIEmailCompanion.ComposeAssistant = class {
     
     sidebar.updateContent(interfaceHtml);
     
-    // Setup prompt handler
+    // Setup prompt handler with sidebar interaction tracking
     this.setupPromptHandler();
   }
 
@@ -356,8 +330,41 @@ window.AIEmailCompanion.ComposeAssistant = class {
     
     let currentGeneratedData = null;
     
-    if (promptInput && generateBtn) {
-      generateBtn.addEventListener('click', async () => {
+    // Track when user is interacting with sidebar elements
+    if (promptInput) {
+      promptInput.addEventListener('focus', () => {
+        this.isInteractingWithSidebar = true;
+        // Keep compose mode active
+        if (window.AIEmailCompanion.main) {
+          window.AIEmailCompanion.main.isComposing = true;
+        }
+      });
+      
+      promptInput.addEventListener('blur', () => {
+        // Don't immediately set to false - wait to see where focus goes
+        setTimeout(() => {
+          const activeElement = document.activeElement;
+          if (!activeElement || !activeElement.closest('.ai-companion-sidebar')) {
+            this.isInteractingWithSidebar = false;
+          }
+        }, 100);
+      });
+    }
+    
+    if (generateBtn) {
+      generateBtn.addEventListener('mousedown', (e) => {
+        // Prevent default to stop blur event on compose area
+        e.preventDefault();
+        this.isInteractingWithSidebar = true;
+      });
+      
+      generateBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Keep sidebar interaction active
+        this.isInteractingWithSidebar = true;
+        
         const prompt = promptInput.value.trim();
         if (!prompt) {
           promptInput.classList.add('error');
@@ -378,23 +385,13 @@ window.AIEmailCompanion.ComposeAssistant = class {
           if (emailData) {
             currentGeneratedData = emailData;
             
-            // Check if preview mode is enabled
-            const settings = await this.getSettings();
-            const previewModeEnabled = settings.previewMode !== false; // Default to true if not set
-            
-            if (previewModeEnabled && previewSection) {
-              // Show in preview section
+            // Always show in preview section for review
+            if (previewSection) {
               previewSubject.textContent = emailData.subject || 'No subject';
               previewBody.innerHTML = (emailData.body || 'No content').replace(/\n/g, '<br>');
               previewSection.style.display = 'block';
               
               this.components.showNotification('Content generated! Review and use it below.', 'success');
-            } else {
-              // Directly insert the content (old behavior)
-              this.insertGeneratedEmail(emailData);
-              promptInput.value = '';
-              currentGeneratedData = null;
-              this.components.showNotification('Email generated successfully!', 'success');
             }
           }
         } catch (error) {
@@ -409,25 +406,44 @@ window.AIEmailCompanion.ComposeAssistant = class {
             </svg>
             <span>Generate Email</span>
           `;
+          
+          // Keep interaction active for a bit after generation
+          setTimeout(() => {
+            this.isInteractingWithSidebar = false;
+          }, 1000);
         }
       });
       
       // Use generated content handler
       if (useBtn) {
-        useBtn.addEventListener('click', () => {
+        useBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
           if (currentGeneratedData) {
             this.insertGeneratedEmail(currentGeneratedData);
             previewSection.style.display = 'none';
             promptInput.value = '';
             currentGeneratedData = null;
             this.components.showNotification('Content inserted into email!', 'success');
+            
+            // Refocus on compose area after inserting
+            const composeArea = document.querySelector('[contenteditable="true"][aria-label*="Message Body"]') ||
+                               document.querySelector('[contenteditable="true"]');
+            if (composeArea) {
+              setTimeout(() => {
+                composeArea.focus();
+              }, 100);
+            }
           }
         });
       }
       
       // Regenerate handler
       if (regenerateBtn) {
-        regenerateBtn.addEventListener('click', () => {
+        regenerateBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           generateBtn.click();
         });
       }
@@ -495,6 +511,7 @@ window.AIEmailCompanion.ComposeAssistant = class {
     suggestionsContainer.querySelectorAll('.use-suggestion-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
+        e.preventDefault();
         const index = parseInt(btn.dataset.index);
         this.insertSuggestion(suggestions[index]);
         
@@ -570,37 +587,6 @@ window.AIEmailCompanion.ComposeAssistant = class {
   insertGeneratedEmail(emailData) {
     // Insert the generated email (assumes it has subject and body)
     this.insertSuggestion(emailData);
-  }
-
-  generateSubjectFromPrompt(prompt) {
-    // Simple subject generation based on prompt
-    const words = prompt.toLowerCase().split(' ');
-    
-    if (words.includes('meeting')) return 'Meeting Follow-up';
-    if (words.includes('thank')) return 'Thank You';
-    if (words.includes('proposal')) return 'Proposal for Your Review';
-    if (words.includes('update')) return 'Project Update';
-    
-    return 'Following Up';
-  }
-
-  generateEmailFromPrompt(prompt, context) {
-    // Generate email body based on prompt
-    let body = '';
-    
-    if (context && context.replyType === 'reply') {
-      body = `Dear ${context.originalSender},\n\n`;
-    } else {
-      body = 'Dear [Recipient],\n\n';
-    }
-    
-    // Add main content based on prompt
-    body += `${prompt}\n\n`;
-    
-    // Add closing
-    body += 'Best regards,\n[Your Name]';
-    
-    return body;
   }
 
   updateContext(context) {
