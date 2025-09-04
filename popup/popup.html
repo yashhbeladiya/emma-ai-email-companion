@@ -1,17 +1,8 @@
 <!--
-  Emma - AI Email Companion Popup Interface
+  Emma - Your AI Email Companion
   
-  Extension popup HTML that appears when users click the Emma icon
-  in the Chrome toolbar. Provides settings management, status display,
-  and quick access to extension features.
-  
-  Features:
-  - Extension status and health monitoring
-  - Settings and preferences management
-  - Current site compatibility display
-  - Quick toggle controls for features
-  - Help and documentation access
-  - Modern responsive design
+  Extension popup interface for Emma - the smart email assistant
+  that helps you write better emails, faster.
   
   @version 2.0.0
   @author Emma AI Team
@@ -45,23 +36,19 @@
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-
-    .logo svg {
-      width: 24px;
-      height: 24px;
-      fill: white;
+      font-size: 24px;
     }
 
     .title {
-      font-size: 18px;
-      font-weight: 600;
+      font-size: 20px;
+      font-weight: 700;
       margin: 0 0 4px;
+      letter-spacing: -0.5px;
     }
 
     .subtitle {
       font-size: 14px;
-      opacity: 0.8;
+      opacity: 0.9;
       margin: 0;
     }
 
@@ -307,218 +294,98 @@
       display: block;
     }
 
-    /* Settings Styles */
-    .settings-section {
-      margin-bottom: 24px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #f3f4f6;
-    }
-
-    .settings-section:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-    }
-
-    .section-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #374151;
-      margin: 0 0 16px;
-    }
-
-    .setting-item {
-      margin-bottom: 16px;
-    }
-
-    .setting-item:last-child {
-      margin-bottom: 0;
-    }
-
-    .setting-label {
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      margin-bottom: 4px;
-    }
-
-    .setting-label-text {
-      display: block;
-      font-size: 14px;
-      font-weight: 500;
-      color: #374151;
-      margin-bottom: 8px;
-    }
-
-    .setting-checkbox {
-      width: 16px;
-      height: 16px;
-      margin-right: 8px;
-      accent-color: #667eea;
-    }
-
-    .setting-text {
-      font-size: 14px;
-      font-weight: 500;
-      color: #374151;
-    }
-
-    .setting-input {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      font-size: 13px;
-      transition: border-color 0.2s;
-    }
-
-    .setting-input:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    .setting-desc {
-      font-size: 12px;
-      color: #6b7280;
-      margin: 4px 0 0;
-    }
-
-    /* About Section */
-    .about-header {
-      text-align: center;
-      padding: 20px 0;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      margin: -24px -20px 24px;
-      color: white;
-      border-radius: 16px 16px 0 0;
-    }
-
-    .about-icon {
-      font-size: 32px;
-      margin-bottom: 8px;
-    }
-
-    .about-title {
-      font-size: 24px;
-      font-weight: 700;
-      margin: 0 0 4px;
-    }
-
-    .about-subtitle {
-      font-size: 14px;
-      opacity: 0.9;
-      margin: 0;
-    }
-
+    /* About Section - Simplified */
     .about-content {
       padding: 0;
     }
 
-    .about-section {
-      display: flex;
-      align-items: flex-start;
-      margin-bottom: 20px;
-      padding: 16px;
+    .about-info {
       background: #f8faff;
       border-radius: 12px;
-      border-left: 4px solid #667eea;
-    }
-
-    .section-icon {
-      font-size: 24px;
-      margin-right: 12px;
-      margin-top: 2px;
-      flex-shrink: 0;
-    }
-
-    .section-content h3 {
-      font-size: 16px;
-      font-weight: 600;
-      color: #374151;
-      margin: 0 0 6px;
-    }
-
-    .section-content p {
-      font-size: 13px;
-      color: #6b7280;
-      line-height: 1.5;
-      margin: 0;
-    }
-
-    .support-section {
-      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-      border-radius: 12px;
       padding: 20px;
-      margin: 20px 0;
-      border: 1px solid #bae6fd;
+      margin-bottom: 20px;
+      text-align: center;
     }
 
-    .support-title {
-      text-align: center;
+    .about-emoji {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .about-title {
       font-size: 18px;
-      font-weight: 600;
-      color: #1e40af;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin: 0 0 8px;
+    }
+
+    .about-description {
+      font-size: 14px;
+      color: #475569;
+      line-height: 1.6;
       margin: 0 0 16px;
     }
 
-    .support-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
+    .creator-info {
+      font-size: 13px;
+      color: #6b7280;
+      margin: 16px 0;
     }
 
-    .support-item {
+    .support-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .support-btn {
       display: flex;
       align-items: center;
-      padding: 12px;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 16px;
       background: white;
+      border: 1px solid #e5e7eb;
       border-radius: 8px;
-      border: 1px solid #e0f2fe;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .support-item:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .support-icon {
-      font-size: 18px;
-      margin-right: 8px;
-    }
-
-    .support-text {
-      font-size: 12px;
-      font-weight: 500;
       color: #374151;
-    }
-
-    .contact-section {
-      text-align: center;
-      padding: 16px;
-      background: #fffbeb;
-      border-radius: 8px;
-      border: 1px solid #fde68a;
-      margin-top: 16px;
-    }
-
-    .contact-text {
-      font-size: 13px;
-      color: #92400e;
-      margin: 0;
+      font-size: 14px;
       font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .support-btn:hover {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: transparent;
+      transform: translateY(-1px);
+    }
+
+    .support-btn .icon {
+      font-size: 18px;
+    }
+
+    .feature-badge {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+      text-transform: uppercase;
     }
   </style>
 </head>
 <body>
   <div class="popup-header">
     <div class="logo">
-      <svg viewBox="0 0 24 24">
-        <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1H5C3.89 1 3 1.89 3 3V21C3 22.11 3.89 23 5 23H11V21H5V3H13V9H21ZM14 15.5C14 14.12 15.12 13 16.5 13S19 14.12 19 15.5 17.88 18 16.5 18 14 16.88 14 15.5ZM16.5 19C18.43 19 20 17.43 20 15.5S18.43 12 16.5 12 13 13.57 13 15.5 14.57 19 16.5 19Z"/>
-      </svg>
+      <img src="../icons/icon48.png" alt="Emma Logo" width="32" height="32">
     </div>
-    <h1 class="title">AI Email Companion</h1>
-    <p class="subtitle">Smart email assistance powered by AI</p>
+    <h1 class="title">Emma</h1>
+    <p class="subtitle">Your AI Email Companion</p>
   </div>
 
   <div class="popup-content">
@@ -546,7 +413,7 @@
             </div>
             <div class="feature-text">
               <h3 class="feature-title">Key Points</h3>
-              <p class="feature-desc">Extract and display key points from emails</p>
+              <p class="feature-desc">Extract important information</p>
             </div>
             <div class="toggle-switch" id="keyPoints"></div>
           </li>
@@ -558,8 +425,8 @@
               </svg>
             </div>
             <div class="feature-text">
-              <h3 class="feature-title">Quick Replies</h3>
-              <p class="feature-desc">Generate smart reply suggestions</p>
+              <h3 class="feature-title">Quick Replies <span class="feature-badge">AI</span></h3>
+              <p class="feature-desc">Smart reply suggestions</p>
             </div>
             <div class="toggle-switch" id="quickReplies"></div>
           </li>
@@ -572,7 +439,7 @@
             </div>
             <div class="feature-text">
               <h3 class="feature-title">Compose Assistant</h3>
-              <p class="feature-desc">AI assistance while composing emails</p>
+              <p class="feature-desc">AI-powered writing help</p>
             </div>
             <div class="toggle-switch" id="composeAssistant"></div>
           </li>
@@ -585,7 +452,7 @@
             </div>
             <div class="feature-text">
               <h3 class="feature-title">Email Analysis</h3>
-              <p class="feature-desc">Analyze email intent and tone</p>
+              <p class="feature-desc">Intent and tone detection</p>
             </div>
             <div class="toggle-switch" id="emailAnalysis"></div>
           </li>
@@ -598,76 +465,47 @@
             </div>
             <div class="feature-text">
               <h3 class="feature-title">Meeting Detection</h3>
-              <p class="feature-desc">Detect and extract meeting information</p>
+              <p class="feature-desc">Extract meeting details</p>
             </div>
             <div class="toggle-switch" id="meetingDetection"></div>
           </li>
         </ul>
       </div>
 
-      <!-- About Tab -->
+      <!-- About Tab - Simplified -->
       <div class="tab-content" id="about-tab">
-        <div class="about-header">
-          <div class="about-icon">👋</div>
-          <h2 class="about-title">Meet Emma</h2>
-          <p class="about-subtitle">Your AI Email Companion</p>
-        </div>
-
         <div class="about-content">
-          <div class="about-section">
-            <div class="section-icon">🎓</div>
-            <div class="section-content">
-              <h3>Made by a Student</h3>
-              <p>Hi! I'm a student passionate about building tools that make life easier. Emma is my way of helping you manage your emails more efficiently with AI.</p>
+          <div class="about-info">
+            <div class="about-emoji">💫</div>
+            <h2 class="about-title">Emma</h2>
+            <p class="about-description">
+              Emma uses advanced AI to help you write better emails, faster. 
+              Get smart suggestions, analyze tone, and never miss important details.
+            </p>
+            <div class="creator-info">
+              Created with ❤️ by a student developer
             </div>
           </div>
 
-          <div class="about-section">
-            <div class="section-icon">🔒</div>
-            <div class="section-content">
-              <h3>Privacy First</h3>
-              <p>Your privacy matters. Emma processes emails locally and doesn't collect or share any personal data. What you write stays with you.</p>
-            </div>
-          </div>
-
-          <div class="about-section">
-            <div class="section-icon">💡</div>
-            <div class="section-content">
-              <h3>Help Me Improve</h3>
-              <p>Your feedback drives Emma's evolution. Share your thoughts and help shape the future of AI email assistance.</p>
-            </div>
-          </div>
-
-          <div class="support-section">
-            <h3 class="support-title">Show Your Support</h3>
-            <div class="support-grid">
-              <div class="support-item">
-                <div class="support-icon">⭐</div>
-                <div class="support-text">Rate on Chrome Store</div>
-              </div>
-              <div class="support-item">
-                <div class="support-icon">💬</div>
-                <div class="support-text">Share Feedback</div>
-              </div>
-              <div class="support-item">
-                <div class="support-icon">🤝</div>
-                <div class="support-text">Support Financially</div>
-              </div>
-              <div class="support-item">
-                <div class="support-icon">📢</div>
-                <div class="support-text">Tell Your Friends</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="contact-section">
-            <p class="contact-text">🚀 Building more amazing tools? Let's connect!</p>
+          <div class="support-buttons">
+            <a href="mailto:yashhbeladiya@gmail.com" class="support-btn">
+              <span class="icon">📧</span>
+              <span>Send Feedback</span>
+            </a>
+            <a href="#" class="support-btn" id="rateExtension">
+              <span class="icon">⭐</span>
+              <span>Rate Emma</span>
+            </a>
+            <a href="#" class="support-btn" id="shareExtension">
+              <span class="icon">🚀</span>
+              <span>Share with Friends</span>
+            </a>
           </div>
         </div>
 
         <div class="action-buttons">
-          <button class="btn btn-secondary" id="resetSettings">Reset Features</button>
-          <button class="btn btn-primary" id="saveSettings">Save Changes</button>
+          <button class="btn btn-secondary" id="resetSettings">Reset</button>
+          <button class="btn btn-primary" id="saveSettings">Save</button>
         </div>
       </div>
 
@@ -699,7 +537,7 @@
         </div>
 
         <div class="action-buttons">
-          <button class="btn btn-secondary" id="openSidebar">Open Assistant</button>
+          <button class="btn btn-secondary" id="openSidebar">Open Emma</button>
           <button class="btn btn-primary" id="refreshPage">Refresh Page</button>
         </div>
       </div>
@@ -707,7 +545,7 @@
   </div>
 
   <div class="footer">
-    Made with ❤️ for better email productivity
+    Emma v2.0 - Making emails smarter ✨
   </div>
 
   <script src="popup.js"></script>
