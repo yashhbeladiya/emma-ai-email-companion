@@ -1,4 +1,6 @@
 // groq-api.js - Groq API Integration with Embedded Calendar Functions
+import { GROQ_API_KEY } from '../../../config.js';
+
 window.AIEmailCompanion = window.AIEmailCompanion || {};
 
 // First, add the CalendarIntegration class to the namespace
@@ -269,7 +271,7 @@ window.AIEmailCompanion.CalendarIntegration = class {
 // Now add the GroqAPI class
 window.AIEmailCompanion.GroqAPI = class {
   constructor() {
-    this.apiKey = 'YOUR_API_KEY_HERE';
+    this.apiKey = GROQ_API_KEY;
     this.apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
     this.model = 'llama-3.3-70b-versatile';
     this.cache = new Map();
