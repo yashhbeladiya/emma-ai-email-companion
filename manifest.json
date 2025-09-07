@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Emma - AI Email Companion",
   "version": "2.0.0",
-  "description": "Your intelligent email assistant. Emma helps you write better emails with AI-powered suggestions, smart replies, and tone analysis.",
+  "description": "Your intelligent Gmail assistant. Emma helps you write better emails with AI-powered suggestions, smart replies, and tone analysis for Gmail.",
   "permissions": [
     "activeTab",
     "storage",
@@ -12,18 +12,12 @@
     "alarms"
   ],
   "host_permissions": [
-    "https://mail.google.com/*",
-    "https://outlook.live.com/*",
-    "https://outlook.office.com/*",
-    "https://outlook.office365.com/*"
+    "https://mail.google.com/*"
   ],
   "content_scripts": [
     {
       "matches": [
-        "https://mail.google.com/*",
-        "https://outlook.live.com/*",
-        "https://outlook.office.com/*",
-        "https://outlook.office365.com/*"
+        "https://mail.google.com/*"
       ],
       "js": [
         "content/modules/utils/constants.js",
@@ -67,7 +61,11 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
+  },
   "author": "Yashh Beladiya",
   "homepage_url": "https://github.com/yashhbeladiya/emma-ai-email-companion",
-  "short_name": "Emma"
+  "short_name": "Emma",
+  "minimum_chrome_version": "88"
 }
